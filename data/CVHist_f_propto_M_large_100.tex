@@ -1,0 +1,63 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{crimson2143940}{RGB}{214,39,40}
+\definecolor{darkslategray38}{RGB}{38,38,38}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{steelblue31119180}{RGB}{31,119,180}
+
+\begin{axis}[
+axis line style={darkslategray38},
+height=\figheight,
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.97)},
+  anchor=north west,
+  draw=none
+},
+tick align=outside,
+tick pos=left,
+title={Stopping Times Distribution 
+50\% large \(\displaystyle \pi\) values,    \(\displaystyle f \propto \pi\)},
+width=\figwidth,
+x grid style={lightgray204},
+xlabel=\textcolor{darkslategray38}{Stopping Times},
+xmin=79.5, xmax=200.5,
+xtick style={color=darkslategray38},
+y grid style={lightgray204},
+ylabel=\textcolor{darkslategray38}{Density},
+ymin=0, ymax=0.0729272727272727,
+ytick style={color=darkslategray38}
+]
+\draw[draw=none,fill=steelblue31119180,fill opacity=0.5] (axis cs:85,0) rectangle (axis cs:96,0.000363636363636364);
+\addlegendimage{ybar,ybar legend,draw=none,fill=steelblue31119180,fill opacity=0.5}
+\addlegendentry{propM}
+
+\draw[draw=none,fill=steelblue31119180,fill opacity=0.5] (axis cs:96,0) rectangle (axis cs:107,0.000181818181818182);
+\draw[draw=none,fill=steelblue31119180,fill opacity=0.5] (axis cs:107,0) rectangle (axis cs:118,0.000181818181818182);
+\draw[draw=none,fill=steelblue31119180,fill opacity=0.5] (axis cs:118,0) rectangle (axis cs:129,0.000181818181818182);
+\draw[draw=none,fill=steelblue31119180,fill opacity=0.5] (axis cs:129,0) rectangle (axis cs:140,0);
+\draw[draw=none,fill=steelblue31119180,fill opacity=0.5] (axis cs:140,0) rectangle (axis cs:151,0.000363636363636364);
+\draw[draw=none,fill=steelblue31119180,fill opacity=0.5] (axis cs:151,0) rectangle (axis cs:162,0.000727272727272727);
+\draw[draw=none,fill=steelblue31119180,fill opacity=0.5] (axis cs:162,0) rectangle (axis cs:173,0.00418181818181818);
+\draw[draw=none,fill=steelblue31119180,fill opacity=0.5] (axis cs:173,0) rectangle (axis cs:184,0.0152727272727273);
+\draw[draw=none,fill=steelblue31119180,fill opacity=0.5] (axis cs:184,0) rectangle (axis cs:195,0.0694545454545454);
+\draw[draw=none,fill=crimson2143940,fill opacity=0.5] (axis cs:104,0) rectangle (axis cs:112.7,0.00873563218390804);
+\addlegendimage{ybar,ybar legend,draw=none,fill=crimson2143940,fill opacity=0.5}
+\addlegendentry{propM+CV}
+
+\draw[draw=none,fill=crimson2143940,fill opacity=0.5] (axis cs:112.7,0) rectangle (axis cs:121.4,0.0273563218390805);
+\draw[draw=none,fill=crimson2143940,fill opacity=0.5] (axis cs:121.4,0) rectangle (axis cs:130.1,0.0335632183908046);
+\draw[draw=none,fill=crimson2143940,fill opacity=0.5] (axis cs:130.1,0) rectangle (axis cs:138.8,0.020919540229885);
+\draw[draw=none,fill=crimson2143940,fill opacity=0.5] (axis cs:138.8,0) rectangle (axis cs:147.5,0.0137931034482759);
+\draw[draw=none,fill=crimson2143940,fill opacity=0.5] (axis cs:147.5,0) rectangle (axis cs:156.2,0.00505747126436782);
+\draw[draw=none,fill=crimson2143940,fill opacity=0.5] (axis cs:156.2,0) rectangle (axis cs:164.9,0.00229885057471265);
+\draw[draw=none,fill=crimson2143940,fill opacity=0.5] (axis cs:164.9,0) rectangle (axis cs:173.6,0.00114942528735632);
+\draw[draw=none,fill=crimson2143940,fill opacity=0.5] (axis cs:173.6,0) rectangle (axis cs:182.3,0.000689655172413792);
+\draw[draw=none,fill=crimson2143940,fill opacity=0.5] (axis cs:182.3,0) rectangle (axis cs:191,0.00137931034482759);
+\end{axis}
+
+\end{tikzpicture}
