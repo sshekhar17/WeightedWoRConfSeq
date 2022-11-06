@@ -20,11 +20,11 @@ def get_methods_dict(lambda_max=2):
     """
     methods_dict = {}
     methods_dict['propM'] =  {'method_name':'propM', 'use_CV':False, 'lambda_max':lambda_max}
-    methods_dict['propM+logical'] =  {'method_name':'propM', 'use_CV':False, 'lambda_max':lambda_max, 'intersect':True, 
-                                            'logical_CS':True}
+    # methods_dict['propM+logical'] =  {'method_name':'propM', 'use_CV':False, 'lambda_max':lambda_max, 'intersect':True, 
+    #                                         'logical_CS':True}
     methods_dict['uniform'] =  {'method_name':'uniform', 'use_CV':False, 'lambda_max':lambda_max}
-    methods_dict['uniform+logical'] =  {'method_name':'uniform', 'use_CV':False, 'lambda_max':lambda_max, 'intersect':True, 
-                                            'logical_CS':True}
+    # methods_dict['uniform+logical'] =  {'method_name':'uniform', 'use_CV':False, 'lambda_max':lambda_max, 'intersect':True, 
+    #                                         'logical_CS':True}
     return methods_dict
 
 def CSexperiment(M_ranges, f_ranges, N=200, N1=60,lambda_max=2, a=0.5, inv_prop=True, 
@@ -57,7 +57,7 @@ def CSexperiment(M_ranges, f_ranges, N=200, N1=60,lambda_max=2, a=0.5, inv_prop=
     CompareMethodsOneTrial(M, f, S, methods_dict,  nG=nG, save_fig=save_fig,
                             fig_info_dict=fig_info_dict, return_vals=False,
                             plot_results=True, plot_CS_width=plot_CS_width,
-                            post_process=False)
+                            post_process=True, return_post_processed_separately=True)
 
 
 def HistExperiment1(M_ranges, f_ranges, N=200, N1=100, epsilon=0.05, inv_prop=True, 
@@ -100,8 +100,8 @@ def HistExperiment1(M_ranges, f_ranges, N=200, N1=100, epsilon=0.05, inv_prop=Tr
 
 if __name__=='__main__':
 
-    CSExpt = False 
-    HistExpt =  True
+    CSExpt = True
+    HistExpt =  False 
     save_fig = False
 
     if CSExpt:

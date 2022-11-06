@@ -102,7 +102,8 @@ def plot_hists(N, StoppingTimesDict, palette=None, plot_mean_val=False,
 
 
 def CompareMethodsOneTrial(M, f, S, methods_dict,  nG=100, save_fig=False, fig_info_dict={}, 
-            return_vals=False, plot_results=True, plot_CS_width=True, post_process=True):
+            return_vals=False, plot_results=True, plot_CS_width=True, post_process=True, 
+            return_post_processed_separately=False):
     """
     plot the CS for uniform and propM strategies; with and without logicalCS 
     
@@ -125,10 +126,15 @@ def CompareMethodsOneTrial(M, f, S, methods_dict,  nG=100, save_fig=False, fig_i
         kwargs = methods_dict[key]
         _, _, LowerCS, UpperCS, Idx, _ = run_one_expt(M, f, S, nG=nG, **kwargs)
         if post_process: 
-            LowerCS, UpperCS = predictive_correction1(LowerCS, UpperCS, 
+            LowerCS_, UpperCS_ = predictive_correction1(LowerCS, UpperCS, 
                                             Idx=Idx, Pi=Pi, f=f, 
                                             logical=True, intersect=True)
+            if not return_post_processed_separately:
+                LowerCS, UpperCS = LowerCS_, UpperCS_
         Results_Dict[key] = (LowerCS, UpperCS, Idx)
+        if post_process and return_post_processed_separately:
+            key_ = key + '+logical'
+            Results_Dict[key_] = (LowerCS_, UpperCS_, Idx)
 
     if plot_results: 
         plot_CS(N, M, f, Results_Dict=Results_Dict, plot_CS_width=plot_CS_width, 
