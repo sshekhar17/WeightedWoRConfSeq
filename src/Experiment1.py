@@ -77,8 +77,8 @@ def HistExperiment1(M_ranges, f_ranges, N=200, N1=100, epsilon=0.05, inv_prop=Tr
     # generate the dictionary with histogram plotting information 
     StoppingTimesDict = getStoppingTimesDistribution(methods_dict, N, N1, 
                             a=a, M_ranges=M_ranges, f_ranges=f_ranges,
-                            num_trials=num_trials, save_fig=False, post_process=False, 
-                            epsilon=epsilon)
+                            num_trials=num_trials, save_fig=False, post_process=True, 
+                            epsilon=epsilon, return_post_processed_separately=True) 
 
     if verbose: 
         for key in StoppingTimesDict:
@@ -90,7 +90,8 @@ def HistExperiment1(M_ranges, f_ranges, N=200, N1=100, epsilon=0.05, inv_prop=Tr
         ylabel='Density'
         hist_info_dict = {
             'title':title, 'figname':figname, 'xlabel':xlabel, 
-            'ylabel':ylabel
+            'ylabel':ylabel, 
+            'ymax':1
         }
         plot_hists(N=N, StoppingTimesDict=StoppingTimesDict,
                     save_fig=save_fig, hist_info_dict=hist_info_dict, 
@@ -100,33 +101,30 @@ def HistExperiment1(M_ranges, f_ranges, N=200, N1=100, epsilon=0.05, inv_prop=Tr
 
 if __name__=='__main__':
 
-    CSExpt = True
-    HistExpt =  False 
-    save_fig = False
+#### Select the experiments to run 
+    CSExpt =   False
+    HistExpt = True
+    save_fig = True
 
+#### Select the parameters of the experiments 
+    a = 0.1
+    N = 200
+    N1 = 40
+    nG = 100
+    inv_prop = False 
+    N2 = N-N1
+    lambda_max = 2
+    M_ranges = [ [1e5, 1e6], [1e2, 1*1e3]]
+    f_ranges = [[0.4, 0.5], [1e-3, 2*1e-3]]
+    epsilon = 0.05
+    num_trials = 500
+
+#### Run the experiments 
     if CSExpt:
-        M_ranges = [ [1e5, 1e6], [1e2, 1*1e3]]
-        f_ranges = [[0.4, 0.5], [1e-3, 2*1e-3]]
-        a = 0.1
-        N = 200
-        N1 = 40
-        inv_prop = False 
-        N2 = N-N1
-        lambda_max = 2
-        CSexperiment(M_ranges, f_ranges, N=N, N1=N1,lambda_max=lambda_max, a=a, inv_prop=False, 
-                    nG=100, save_fig=save_fig, plot_CS_width=True)
-
+        CSexperiment(M_ranges, f_ranges, N=N, N1=N1,lambda_max=lambda_max, a=a, inv_prop=inv_prop, 
+                    nG=nG, save_fig=save_fig, plot_CS_width=True)
 
     if HistExpt:
-        M_ranges = [ [1e5, 1e6], [1e2, 1*1e3]]
-        f_ranges = [[0.4, 0.5], [1e-3, 2*1e-3]]
-        N = 200 
-        N1 = 50
-        a=0.5  # ensures that (f/s)-values lie in [1-a, 1+a]
-        epsilon=0.05
-        num_trials = 20
-        inv_prop=False # f is inversely proportional to \pi
         HistExperiment1(M_ranges, f_ranges, N=N, N1=N1, epsilon=epsilon, inv_prop=inv_prop, 
                     verbose=True, plot_results=True, save_fig=save_fig, 
                     a=a, num_trials=num_trials)
-        

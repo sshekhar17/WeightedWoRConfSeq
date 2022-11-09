@@ -60,7 +60,7 @@ def plot_CS(N, M, f, Results_Dict, plot_CS_width=False,
 
 
 def plot_hists(N, StoppingTimesDict, palette=None, plot_mean_val=False, 
-                save_fig=False, hist_info_dict={}, opacity=0.5):
+                save_fig=False, hist_info_dict={}, opacity=0.5, ymax=None):
     # default color palette 
     if palette is None:
         palette = sns.color_palette(palette='tab10',
@@ -83,15 +83,22 @@ def plot_hists(N, StoppingTimesDict, palette=None, plot_mean_val=False,
         xlabel = 'Stopping Times' 
         ylabel = 'Density' 
         figname = '../data/histCS'
+        ymax = None
     else:
         title = hist_info_dict['title']
         xlabel = hist_info_dict['xlabel']
         ylabel = hist_info_dict['ylabel']
         figname = hist_info_dict['figname']
+        if 'ymax' in hist_info_dict:
+            ymax = hist_info_dict['ymax']
+        else:
+            ymax = None 
     plt.title(title, fontsize=15)
     plt.xlabel(xlabel, fontsize=13)
     plt.ylabel(ylabel, fontsize=13)
     plt.legend(fontsize=13)
+    if ymax is not None:
+        plt.ylim([0, ymax])
     # save the figure 
     if save_fig: 
         figname_ = figname + '.tex'
@@ -147,12 +154,11 @@ def getStoppingTimesDistribution(methods_dict, N, N1, a=0.5,
                                 M_ranges = [ [1e5, 1e6], [1e2, 1*1e3]], 
                                 f_ranges = [[1e-3, 2*1e-3], [0.4, 0.5]],
                                 num_trials = 200, nG=100, save_fig=False,
-                                post_process=True, epsilon=0.05, progress_bar=True):
+                                post_process=True, epsilon=0.05, progress_bar=True, 
+                                return_post_processed_separately=False):
     
     # initialize the dictionary to store the stopping times 
     StoppingTimesDict = {}    
-    for key in methods_dict: 
-        StoppingTimesDict[key] = np.zeros((num_trials,))
     # Now run the main loop 
     range_ = range(num_trials)
     if progress_bar:
@@ -165,9 +171,12 @@ def getStoppingTimesDistribution(methods_dict, N, N1, a=0.5,
         # run one trial of the experiment 
         Results_Dict = CompareMethodsOneTrial(M, f, S, methods_dict=methods_dict, 
                             nG=nG, save_fig=False, return_vals=True,
-                            plot_results=False, post_process=post_process)
+                            plot_results=False, post_process=post_process, 
+                            return_post_processed_separately=return_post_processed_separately)
         # calculate and record the new stopping times 
         for key in Results_Dict:
+            if key not in StoppingTimesDict:
+                StoppingTimesDict[key] = np.zeros((num_trials,))
             result = Results_Dict[key]
             L, U = result[0], result[1]
             W = U-L 

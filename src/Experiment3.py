@@ -113,9 +113,11 @@ def GainExperiment(AA, M_ranges, f_ranges, N, N1,  epsilon=0.025, inv_prop=True,
 
 
     if inv_prop:
-        figname = f'../data/CV_Gain_f_inv_propto_M_large_{N1}'
+        figname = f'/CV_Gain_f_inv_propto_M_large_{N1}_eps_{epsilon}'.replace('.', '_')
+        figname = '../data' + figname 
     else:
-        figname = f'../data/CV_Gain_f_propto_M_large_{N1}'
+        figname = f'/CV_Gain_f_propto_M_large_{N1}_eps_{epsilon}'.replace('.', '_')
+        figname = '../data' + figname 
     # plot the results 
     if plot_results:
         palette = sns.color_palette(n_colors=10)
@@ -140,23 +142,23 @@ def GainExperiment(AA, M_ranges, f_ranges, N, N1,  epsilon=0.025, inv_prop=True,
 
 if __name__=='__main__':
 
-    CSExpt = True
+    CSExpt = False
     HistExpt =False 
-    GainExpt = False
-    save_fig=True
+    GainExpt = True
+    save_fig= True 
 
     a=0.1
     N = 200 
-    N1 = 100
+    N1 = 40
     N2 = N-N1
     f_over_S_range = [1-a, 1+a]
-    inv_prop=False
-    M_ranges = [  [6e2, 9e2], [1e2, 1e3]]
+    inv_prop=True
+    M_ranges = [  [5e5, 9e5], [1e6, 1e6]]
     f_ranges = [[0.4, 0.5], [1e-3, 2*1e-3]]
     lambda_max = 2.5
     nG=100 
     beta_max = 0.5
-    num_trials= 500
+    num_trials= 250
 
     # M_ranges = [ [1e5, 1e6], [1e2, 1*1e3]],  
     if CSExpt:
@@ -166,7 +168,7 @@ if __name__=='__main__':
 
 
     if HistExpt:
-        epsilon=0.025
+        epsilon=0.05
         HistExperiment3(M_ranges, f_ranges, N, N1, epsilon=epsilon, inv_prop=inv_prop,
                             verbose=True, save_fig=save_fig, a=a, lambda_max=lambda_max,
                             beta_max=beta_max, num_trials=num_trials, return_vals=False, 

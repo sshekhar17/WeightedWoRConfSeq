@@ -28,11 +28,13 @@ def CSexperiment2(M_ranges, f_ranges, N=200, N1=60,lambda_max=2, a=0.5, inv_prop
     N2 = N-N1
     if inv_prop:
         title = f'{N1/N:.0%} large ' +r'$\pi$ values,    $f \propto 1/\pi$'
-        figname = f'../data/AccurateSideInfoCSf_inv_propto_M_large_{N1}'
+        figname =f'/AccurateSideInfoCSf_inv_propto_M_large_{N1}_A_{a}'.replace('.', '_')
+        figname = '../data'+figname 
         f_ranges = [f_ranges[1], f_ranges[0]]
     else:
         title = f'{N1/N:.0%} large ' +r'$\pi$ values,    $f \propto \pi$'
-        figname = f'../data/AccurateSideInfoCSf_propto_M_large_{N1}'
+        figname =f'/AccurateSideInfoCSf_propto_M_large_{N1}_A_{a}'.replace('.', '_')
+        figname = '../data'+figname 
     # generate the problem instance
     M, f, S =  generate_MFS(N_vals=(N1, N2), 
                 N=N, 
@@ -63,11 +65,13 @@ def HistExperiment2(M_ranges, f_ranges, N=200, N1=100, epsilon=0.05, inv_prop=Tr
                     num_trials=20):
     if inv_prop:
         title = f'Stopping Times Distribution \n' +f'{N1/N:.0%} large ' +r'$\pi$ values,    $f \propto 1/\pi$'
-        figname = f'../data/AccurateSideInfoHist_f_inv_propto_M_large_{N1}'
+        figname = f'/AccurateSideInfoHist_f_inv_propto_M_large_{N1}_A_{a}'.replace('.', '_')
+        figname = '../data' + figname 
         f_ranges = [f_ranges[1], f_ranges[0]]
     else:
         title = f'Stopping Times Distribution \n' +f'{N1/N:.0%} large ' +r'$\pi$ values,    $f \propto \pi$'
-        figname = f'../data/AccurateSideInfoHist_f_propto_M_large_{N1}'
+        figname = f'/AccurateSideInfoHist_f_propto_M_large_{N1}_A_{a}'.replace('.', '_')
+        figname = '../data' + figname 
         # assume the original f values are proportional to M 
         # so we don't need any modification here
     # generate the dictionary with methods information 
@@ -97,33 +101,36 @@ def HistExperiment2(M_ranges, f_ranges, N=200, N1=100, epsilon=0.05, inv_prop=Tr
 
 if __name__=='__main__':
 
-    CSExpt = True
-    HistExpt = False
-    savefig=False
+    CSExpt =  False
+    HistExpt =  True
+    save_fig= True
 
     a=0.1  # ensures that (f/s)-values lie in [1-a, 1+a]
     N = 200 
-    N1 = 100
+    N1 = 40
     N2 = N-N1
     epsilon=0.05
-    f_over_S_range = [1-a, 1+a]
-    inv_prop=False
-    M_ranges = [ [1e5, 1e6], [1e5, 1*1e6]]
+    # f_over_S_range = [1-a, 1+a]
+    f_over_S_range = [1/(1+a), 1/(1-a)]
+    inv_prop= False
+    # M_ranges = [ [1e5, 1e6], [1e5, 1e6]]
+    # M_ranges = [ [1e5, 5e5], [6e5, 1e6]]
+    M_ranges = [ [1e5, 5e5], [1e4, 1e5]]
     f_ranges = [[0.4, 0.5], [1e-3, 2*1e-3]]
-    lambda_max = 2.5
+    lambda_max = 2.0
     nG = 100
 
     if CSExpt:
         CSexperiment2(M_ranges, f_ranges, N=N, N1=N1,lambda_max=lambda_max, a=a, inv_prop=inv_prop, 
-                    nG=nG, save_fig=False, plot_CS_width=True,
+                    nG=nG, save_fig=save_fig, plot_CS_width=True,
                     f_over_S_range=f_over_S_range)
 
     if HistExpt:
         epsilon=0.05
-        num_trials=20
+        num_trials=250
         HistExperiment2(M_ranges, f_ranges, N=N, N1=N1, epsilon=epsilon,
                     inv_prop=inv_prop, verbose=True,
-                    plot_results=True, save_fig=False, 
+                    plot_results=True, save_fig=save_fig, 
                     a=a, f_over_S_range=f_over_S_range,
                     lambda_max=lambda_max,
                     num_trials=num_trials)

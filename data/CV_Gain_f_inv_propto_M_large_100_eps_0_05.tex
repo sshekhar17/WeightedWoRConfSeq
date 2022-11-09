@@ -1,0 +1,73 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkslategray38}{RGB}{38,38,38}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{steelblue31119180}{RGB}{31,119,180}
+
+\begin{axis}[
+axis line style={darkslategray38},
+height=\figheight,
+tick align=outside,
+tick pos=left,
+title={Reduction in Sample-Size by using Control Variates},
+width=\figwidth,
+x grid style={lightgray204},
+xlabel=\textcolor{darkslategray38}{Correlation between \(\displaystyle S\) and \(\displaystyle f\) },
+xmin=0.06, xmax=0.94,
+xtick style={color=darkslategray38},
+y grid style={lightgray204},
+ylabel=\textcolor{darkslategray38}{Ratio of stopping times with and without CV},
+ymin=0.38574464753809, ymax=1.02925025487914,
+ytick style={color=darkslategray38}
+]
+\path [draw=steelblue31119180, fill=steelblue31119180, opacity=0.3]
+(axis cs:0.9,0.624480160911117)
+--(axis cs:0.9,0.414994902417229)
+--(axis cs:0.8,0.431167793877585)
+--(axis cs:0.7,0.42599908232358)
+--(axis cs:0.6,0.457247797004145)
+--(axis cs:0.5,0.467924780001853)
+--(axis cs:0.4,0.446025735215527)
+--(axis cs:0.3,0.530471851699367)
+--(axis cs:0.2,0.527728240664928)
+--(axis cs:0.1,0.55575622713684)
+--(axis cs:0.1,0.850039264961127)
+--(axis cs:0.1,0.850039264961127)
+--(axis cs:0.2,0.810121787868307)
+--(axis cs:0.3,0.699926550633106)
+--(axis cs:0.4,0.754958068249301)
+--(axis cs:0.5,0.65381657631696)
+--(axis cs:0.6,0.617087964782194)
+--(axis cs:0.7,0.632424372308649)
+--(axis cs:0.8,0.611304060987822)
+--(axis cs:0.9,0.624480160911117)
+--cycle;
+
+\addplot [semithick, steelblue31119180]
+table {%
+0.9 0.519737531664173
+0.8 0.521235927432704
+0.7 0.529211727316115
+0.6 0.537167880893169
+0.5 0.560870678159406
+0.4 0.600491901732414
+0.3 0.615199201166236
+0.2 0.668925014266617
+0.1 0.702897746048984
+};
+\addplot [semithick, black, opacity=0.6, dashed]
+table {%
+0.1 1
+0.2 1
+0.3 1
+0.4 1
+0.5 1
+0.6 1
+0.7 1
+0.8 1
+0.9 1
+};
+\end{axis}
+
+\end{tikzpicture}
