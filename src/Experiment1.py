@@ -60,6 +60,7 @@ def CSexperiment(M_ranges,
                  nG=100,
                  save_fig=False,
                  plot_CS_width=True,
+                 post_process='separate',
                  seed: Optional[int] = None):
     N2 = N - N1
     if inv_prop:
@@ -103,8 +104,10 @@ def CSexperiment(M_ranges,
                            return_vals=False,
                            plot_results=True,
                            plot_CS_width=plot_CS_width,
-                           post_process=True,
-                           return_post_processed_separately=True)
+                           post_process=post_process
+                           in ['separate', 'logical'],
+                           return_post_processed_separately=post_process
+                           in ['separate'])
 
 
 def HistExperiment1(M_ranges,
@@ -196,7 +199,8 @@ if __name__ == '__main__':
                      inv_prop=inv_prop,
                      nG=nG,
                      save_fig=args.out_path,
-                     plot_CS_width=True,
+                     plot_CS_width=args.cs_metric == 'width',
+                     post_process=args.post_process,
                      seed=args.seed)
 
     if HistExpt:

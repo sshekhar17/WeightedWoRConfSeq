@@ -484,12 +484,12 @@ def run_one_expt(M,
                 alpha=alpha,
                 lambda_strategy=lambda_strategy)
         else:  # cs == 'Emp. Bern.':
-            LowerCS, UpperCS = 1. - eb_boundary(
-                np.array(Z_om_t), np.array(lb_oms), alpha / 2), eb_boundary(
-                    np.array(Z_t),
-                    np.array(lbs),
-                    alpha / 2,
-                    lambda_strategy=lambda_strategy)
+            LowerCS, UpperCS = (
+                eb_boundary(np.array(Z_t),
+                            np.array(lbs),
+                            alpha / 2,
+                            lambda_strategy=lambda_strategy), 1. -
+                eb_boundary(np.array(Z_om_t), np.array(lb_oms), alpha / 2))
     if logical_CS or intersect:
         LowerCS, UpperCS = predictive_correction1(LowerCS,
                                                   UpperCS,

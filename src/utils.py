@@ -284,6 +284,18 @@ def get_arg_values():
                         type=str,
                         default='fig.tex',
                         help='Output path to save figure to')
+    parser.add_argument(
+        '--cs_metric',
+        type=str,
+        default='width',
+        help='Choose whether to plot CS width or CS boundaries.')
+    parser.add_argument(
+        '--post_process',
+        type=str,
+        default='separate',
+        help=
+        'Choose whether to do `separate`, `logical`, or `none` post processing of CSes.'
+    )
     parser.add_argument('--seed', type=int, default=322, help='RNG seed')
     args = parser.parse_args()
     out_dir = os.path.dirname(args.out_path)

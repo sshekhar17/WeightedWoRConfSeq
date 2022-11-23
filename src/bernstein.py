@@ -38,36 +38,40 @@ def eb_boundary(xs: np.ndarray,
     """
     N = xs.shape[0]
     t = np.arange(1, N + 1)
-    c_t = np.abs(lbs - 1)
-    print(c_t)
-
     if ests is None:
-        ests = np.append(0, (np.cumsum(xs) / t)[:-1])
+        ests = np.append(1, (np.cumsum(xs) / t)[:-1])
+    ests = np.clip(ests, 0, 1)
+    c_t = np.abs(lbs - ests)
     var_t = np.square(xs - ests)
 
     c_sq_t = np.square(c_t)
-    avg_c_var_t = np.append(1, np.cumsum(var_t * c_sq_t) / t)
-    inv_sum_t = np.cumsum(1 / (var_t * c_sq_t))
+    avg_var_t = np.append(1, (np.cumsum(var_t) / t)[:-1])
+    avg_c_var_t = np.append(1, (np.cumsum(var_t * c_sq_t) / t)[:-1])
+    pred_avg_c_var_t = avg_c_var_t * (t - 1) / t + (c_sq_t * avg_var_t / t)
+    pred_inv_sum_t = np.append(
+        0,
+        np.cumsum(1 / (var_t * c_sq_t))[:-1]) + avg_var_t * c_sq_t
 
     if lambda_strategy is None:
-        lambda_strategy = 'opt_uniform'
+        lambda_strategy = 'approx_uniform'
     if lambda_strategy == 'approx_uniform':
-        lambda_den_t = t * np.log(t + 1) * avg_c_var_t
+        lambda_den_t = t * np.log(t + 1) * pred_avg_c_var_t
     elif lambda_strategy == 'approx_fixed':
-        lambda_den_t = t0 * avg_c_var_t
+        lambda_den_t = t0 * pred_avg_c_var_t
     elif lambda_strategy == 'opt_uniform':
-        lambda_den_t = c_sq_t * var_t * inv_sum_t * np.log(inv_sum_t + 1)
+        lambda_den_t = c_sq_t * avg_var_t * pred_inv_sum_t * np.log(
+            pred_inv_sum_t + 1)
     elif lambda_strategy == 'opt_fixed':
-        lambda_den_t = c_sq_t * var_t * inv_sum_t * (t0 / t)
+        lambda_den_t = c_sq_t * avg_var_t * pred_inv_sum_t * (t0 / t)
 
     lambda_num = 8 * np.log(1 / alpha)
-    lambda_t = np.minimum(np.sqrt(lambda_num / lambda_den_t), 1 / (2 * c_t))
+    lambda_t = np.minimum(np.sqrt(lambda_num / lambda_den_t), 1 / (1.1 * c_t))
     lambda_sum_t = np.cumsum(lambda_t)
     mu_hat_t = np.cumsum(lambda_t * xs) / lambda_sum_t
 
     margin_t = (np.log(1 / alpha) +
                 np.cumsum(var_t * phi(lambda_t, c_t))) / lambda_sum_t
-    return mu_hat_t + margin_t
+    return mu_hat_t - margin_t
 
 
 def _eb_bound(idxs: np.ndarray,
