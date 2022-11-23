@@ -1,3 +1,5 @@
+from typing import Optional
+
 import argparse
 from math import log
 import os
@@ -14,7 +16,8 @@ def generate_MFS(
         N=200,  # total number of transactions = sum(N_vals)
         M_ranges=[[1e3, 1e4], [1e5, 2 * 1e5]],
         f_ranges=[[0.4, 0.5], [1e-3, 2 * 1e-3]],
-        a=0.1):
+        a=0.1,
+        seed: Optional[int] = None):
     """Generate synthetic M, f, S values.
 
     Parameters
@@ -24,6 +27,7 @@ def generate_MFS(
        f_ranges :       range of f-values in different components
        a        :       relative error in generating S from f
                             1-a \leq f/S \leq 1 + a.
+       seed     :       random seed used to generate data. `None` for no seed.
     Returns
         M, f, S :       (N, ) numpy arrays
     """
@@ -39,6 +43,8 @@ def generate_MFS(
     assert num_components == len(M_ranges)
     assert num_components == len(f_ranges)
     n_ = 0
+    if seed is not None:
+        np.random.seed(seed)
     for i in range(num_components):
         n = N_vals[i]
         M_lower, M_upper = M_ranges[i][0], M_ranges[i][1]
@@ -50,6 +56,8 @@ def generate_MFS(
         f[n_:n_ + n] = np.random.random((n, )) * del_f + f_lower
 
         n_ += n
+
+    # Generate more in correlation style
     factor = (1 - a) + 2 * a * np.random.random((N, ))
     S = factor * f
     S[S >= 1] = 1.0
@@ -64,23 +72,23 @@ def generate_random_problem_instance(N=100,
                                      random_seed=None):
     """Generates a random problem instance.
 
-    Arguments
-        N : int
-            number of transactions
-        M_min : float
-            minimum value of the reported transactions
-        M_max : float
-            maximum value of reported transactions
-        f_min : float  \in [0, 1]
-            minimum fraction of the fraudulent transactions
-        f_max : float  \in [0, 1]
-            maximum fraction of fraudulent transactions
+    , help="Suite of methods to compare in this experiment"    Arguments
+            N : int
+                number of transactions
+            M_min : float
+                minimum value of the reported transactions
+            M_max : float
+                maximum value of reported transactions
+            f_min : float  \in [0, 1]
+                minimum fraction of the fraudulent transactions
+            f_max : float  \in [0, 1]
+                maximum fraction of fraudulent transactions
 
-    Returns
-        M_vals : np.ndarray (N, )
-            generated transaction values
-        f_vals : np.ndarray (N, )
-            generated (oracle) fractions of fraudulent transaction values
+        Returns
+            M_vals : np.ndarray (N, )
+                generated transaction values
+            f_vals : np.ndarray (N, )
+                generated (oracle) fractions of fraudulent transaction values
     """
     assert (M_max > M_min) and (f_max > f_min)
     if random_seed is not None:
@@ -268,6 +276,10 @@ def get_arg_values():
         help=
         '`prop` means that the f values are proportion to pis. `inv` means that the f values are inverse of pis'
     )
+    parser.add_argument('--method_suite',
+                        type=str,
+                        default='betting',
+                        help="Suite of methods to compare in this experiment")
     parser.add_argument('--out_path',
                         type=str,
                         default='fig.tex',

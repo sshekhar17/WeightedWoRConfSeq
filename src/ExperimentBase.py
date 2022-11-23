@@ -1,3 +1,7 @@
+from typing import Optional
+
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 import tikzplotlib as tpl
@@ -63,11 +67,13 @@ def plot_CS(N,
     ax.set_xlabel(xlabel, fontsize=13)
     ax.set_ylabel(ylabel, fontsize=13)
     ax.legend(fontsize=13)
+    fig.tight_layout()
     # save the figure
     if save_fig:
         figname_ = figname + '.tex' if save_fig is True else save_fig
         tpl.save(figname_, axis_width=r'\figwidth', axis_height=r'\figheight')
-        # plt.savefig(figname, dpi=450)
+        picname_ = os.path.splitext(figname_)[0] + '.png'
+        fig.savefig(picname_, dpi=300)
 
 
 def plot_hists(N,
@@ -133,7 +139,8 @@ def CompareMethodsOneTrial(M,
                            plot_results=True,
                            plot_CS_width=True,
                            post_process=True,
-                           return_post_processed_separately=False):
+                           return_post_processed_separately=False,
+                           seed: Optional[int] = None):
     """plot the CS for uniform and propM strategies; with and without
     logicalCS.
 
@@ -193,7 +200,8 @@ def getStoppingTimesDistribution(methods_dict,
                                  post_process=True,
                                  epsilon=0.05,
                                  progress_bar=True,
-                                 return_post_processed_separately=False):
+                                 return_post_processed_separately=False,
+                                 seed: Optional[float] = None):
 
     # initialize the dictionary to store the stopping times
     StoppingTimesDict = {}
@@ -201,13 +209,19 @@ def getStoppingTimesDistribution(methods_dict,
     range_ = range(num_trials)
     if progress_bar:
         range_ = tqdm(range_)
+
+    seed_seq = np.random.SeedSequence(seed) if seed is not None else [
+        None for _ in range(num_trials)
+    ]
+
     for trial in range_:
 
         M, f, S = generate_MFS(N_vals=(N1, N - N1),
                                N=N,
                                M_ranges=M_ranges,
                                f_ranges=f_ranges,
-                               a=a)
+                               a=a,
+                               seed=seed_seq[trial])
         # run one trial of the experiment
         Results_Dict = CompareMethodsOneTrial(
             M,

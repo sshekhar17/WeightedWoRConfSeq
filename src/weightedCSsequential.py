@@ -1,12 +1,12 @@
-"""
-Sequential implementation of the weighted CS using sampling WoR
-"""
+"""Sequential implementation of the weighted CS using sampling WoR."""
 
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
 from utils import generate_MFS, predictive_correction1
+from hoeffding import hoeffding_boundaries
+from bernstein import eb_boundary
 
 ### the overview
 #for t=1,2,...
@@ -20,10 +20,8 @@ from utils import generate_MFS, predictive_correction1
 
 ################################################################################
 def get_idx(val, arr):
-    """
-    find the position of the term val in the array 'arr',
-    return -1 if it doesn't exist
-    """
+    """find the position of the term val in the array 'arr', return -1 if it
+    doesn't exist."""
     for i, a in enumerate(arr):
         if a == val:
             return i
@@ -31,9 +29,8 @@ def get_idx(val, arr):
 
 
 def get_Confidence_Interval(wealth, grid, delta=0.05):
-    """
-    Computes the confidence interval from the cross-sectional
-    value of the process W_t(m)
+    """Computes the confidence interval from the cross-sectional value of the
+    process W_t(m)
 
     Parameters:
         wealth  : (nG,) numpy array denoting \{W_t(m): m \in grid\}
@@ -65,8 +62,7 @@ def get_sampling_distribution2(unseen,
                                method_name='propMS',
                                samp_func=None,
                                samp_kwargs=None):
-    """
-    Returns a probability distribution on the unseen transactions
+    """Returns a probability distribution on the unseen transactions.
 
     Parameters:
         unseen      : ndarray   unseen transaction indices
@@ -121,8 +117,7 @@ def get_range_of_next_payoff(m,
                              f_over_S_range=None,
                              use_CV=False,
                              beta=0.5):
-    """
-    Compute the interval within which the next payoff value must lie
+    """Compute the interval within which the next payoff value must lie.
 
     Parameters:
         m               :float  in (0,1)
@@ -183,9 +178,8 @@ def get_range_of_next_payoff(m,
 
 
 def get_range_of_next_bet(min_payoff, max_payoff, lambda_max=2, tol=1e-10):
-    """
-    Return the range in which the bet must lie to ensure non-negativity
-    of the wealth process
+    """Return the range in which the bet must lie to ensure non-negativity of
+    the wealth process.
 
     Parameters:
         min_payoff      :float lower bound on the next payoff term
@@ -220,8 +214,7 @@ def get_next_CV_bet(cv_vals,
                     beta_max=0.5,
                     tol=1e-10,
                     smoothing_term=1.0):
-    """
-    Calculate the weight to be assigned to the control-variate term
+    """Calculate the weight to be assigned to the control-variate term.
 
     Parameters:
         cv_vals     :ndarray    control-variate terms from prior rounds
@@ -248,8 +241,7 @@ def get_next_CV_bet(cv_vals,
 
 
 def get_next_bet(values, betting_method='kelly', tol=1e-10, lambda_max=None):
-    """
-    Return the next bet
+    """Return the next bet.
 
     Parameters:
         values          :ndarray    previous payoff (or payoff - beta*cv) values
@@ -389,6 +381,7 @@ def run_one_expt(M,
                  f,
                  S,
                  method_name='propMS',
+                 cs='Bet',
                  lambda_max=2.5,
                  beta_max=0.5,
                  nG=100,
@@ -397,7 +390,9 @@ def run_one_expt(M,
                  alpha=0.05,
                  logical_CS=False,
                  intersect=False,
-                 return_payoff=False):
+                 return_payoff=False,
+                 lambda_strategy=None,
+                 cv_max=np.inf):
     N = len(M)
     LowerCS, UpperCS = np.zeros((N, )), np.ones((N, ))
     grid = np.linspace(0, 1, nG)
@@ -414,33 +409,87 @@ def run_one_expt(M,
         cv_vals = None
         beta_vals = None
     Error_flag = False
-    for t in range(N):
-        result = one_step_update(grid=grid,
-                                 wealth=wealth,
-                                 seen=seen,
-                                 unseen=unseen,
-                                 M=M,
-                                 f=f,
-                                 S=S,
-                                 Payoff_vals=Payoff_vals,
-                                 cv_vals=cv_vals,
-                                 beta_vals=beta_vals,
-                                 method_name=method_name,
-                                 use_CV=use_CV,
-                                 beta_max=beta_max,
-                                 lambda_max=lambda_max,
-                                 f_over_S_range=f_over_S_range,
-                                 alpha=alpha)
-        if use_CV:
-            seen, unseen, It, wealth, Payoff_vals, L, U, cv_vals, beta_vals, error_flag, lambda_ = result
-        else:
-            seen, unseen, It, wealth, Payoff_vals, L, U, error_flag, lambda_ = result
-        Transaction_Indices[t] = It
-        Wealth = np.concatenate((Wealth, wealth.reshape((-1, 1))), axis=1)
-        if t >= 1:
-            LowerCS[t], UpperCS[t] = L, U
+    if cs == 'Bet':
+        for t in range(N):
+            result = one_step_update(grid=grid,
+                                     wealth=wealth,
+                                     seen=seen,
+                                     unseen=unseen,
+                                     M=M,
+                                     f=f,
+                                     S=S,
+                                     Payoff_vals=Payoff_vals,
+                                     cv_vals=cv_vals,
+                                     beta_vals=beta_vals,
+                                     method_name=method_name,
+                                     use_CV=use_CV,
+                                     beta_max=beta_max,
+                                     lambda_max=lambda_max,
+                                     f_over_S_range=f_over_S_range,
+                                     alpha=alpha)
+            if use_CV:
+                seen, unseen, It, wealth, Payoff_vals, L, U, cv_vals, beta_vals, error_flag, lambda_ = result
+            else:
+                seen, unseen, It, wealth, Payoff_vals, L, U, error_flag, lambda_ = result
+            Transaction_Indices[t] = It
+            Wealth = np.concatenate((Wealth, wealth.reshape((-1, 1))), axis=1)
+            if t >= 1:
+                LowerCS[t], UpperCS[t] = L, U
 
-        Error_flag = (Error_flag or error_flag)
+            Error_flag = (Error_flag or error_flag)
+    else:
+        unseen = list(range(N))
+        Pi = M / np.sum(M)
+        I_t, Z_t, Z_om_t = [], [], []
+        ubs, lbs, lb_oms = [], [], []
+        for _ in range(N):
+            q_t = get_sampling_distribution2(np.array(unseen),
+                                             M,
+                                             f,
+                                             S,
+                                             method_name=method_name)
+
+            if use_CV:
+                S_adj = np.minimum(S[unseen], cv_max / q_t)
+                possible_Z = lambda f_: (f_ - S_adj) * Pi[
+                    unseen] / q_t + np.sum(Pi[It] * f[It]) + np.sum(Pi[unseen]
+                                                                    * S_adj)
+
+                S_adj_om = np.minimum(1 - S[unseen], cv_max / q_t)
+                possible_Z_om = lambda f_: (f_ - S_adj_om) * Pi[
+                    unseen] / q_t + np.sum(Pi[It] * (1 - f[It])) + np.sum(Pi[
+                        unseen] * S_adj_om)
+            else:
+                possible_Z = lambda f_: f_ * Pi[unseen] / q_t + np.sum(Pi[
+                    I_t] * f[I_t])
+                possible_Z_om = lambda f_: f_ * Pi[unseen] / q_t + np.sum(Pi[
+                    I_t] * (1. - f[I_t]))
+            ubs.append(np.max(possible_Z(1)))
+            lbs.append(np.min(possible_Z(0)))
+            lb_oms.append(np.min(possible_Z_om(0)))
+
+            sample_idx = np.random.choice(np.arange(len(unseen)), p=q_t)
+            Z_t.append(possible_Z(f[unseen])[sample_idx])
+            Z_om_t.append(possible_Z(1. - f[unseen])[sample_idx])
+            I_t.append(unseen[sample_idx])
+            unseen.remove(unseen[sample_idx])
+
+        Transaction_Indices = np.array(I_t)
+
+        if cs == 'Hoef.':
+            LowerCS, UpperCS = hoeffding_boundaries(
+                xs=np.array(Z_t),
+                lbs=np.array(lbs),
+                ubs=np.array(ubs),
+                alpha=alpha,
+                lambda_strategy=lambda_strategy)
+        else:  # cs == 'Emp. Bern.':
+            LowerCS, UpperCS = 1. - eb_boundary(
+                np.array(Z_om_t), np.array(lb_oms), alpha / 2), eb_boundary(
+                    np.array(Z_t),
+                    np.array(lbs),
+                    alpha / 2,
+                    lambda_strategy=lambda_strategy)
     if logical_CS or intersect:
         LowerCS, UpperCS = predictive_correction1(LowerCS,
                                                   UpperCS,
@@ -456,7 +505,6 @@ def run_one_expt(M,
 
 
 def main(A=0.1, use_CV=False):
-
     N = 200
     N1 = 150
     N2 = N - N1
@@ -526,7 +574,6 @@ def main(A=0.1, use_CV=False):
 
 
 def testCV(A=0.1):
-
     N = 200
     N1 = 150
     N2 = N - N1

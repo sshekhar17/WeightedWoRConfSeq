@@ -1,37 +1,52 @@
 """Weighted CS without replacement and without side-information."""
-import argparse
+from typing import Optional
 
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib.pyplot as plt
+#import seaborn as sns
 
-from weightedCSsequential import run_one_expt
-from utils import generate_MFS, predictive_correction1
-from utils import first_threshold_crossing, get_arg_values
+#from weightedCSsequential import run_one_expt
+from utils import generate_MFS
+#predictive_correction1
+from utils import get_arg_values
+#first_threshold_crossing,
 
 from ExperimentBase import *
 
-from tqdm import tqdm
+# from tqdm import tqdm
 # Two experiments
 
 
-def get_methods_dict(lambda_max=2):
+def get_methods_dict(lambda_max=2, cs='betting', comp_cs=None):
     """Generate the methods dictionary for this experiment."""
     methods_dict = {}
-    methods_dict['propM'] = {
-        'method_name': 'propM',
-        'use_CV': False,
-        'lambda_max': lambda_max
-    }
-    # methods_dict['propM+logical'] =  {'method_name':'propM', 'use_CV':False, 'lambda_max':lambda_max, 'intersect':True,
-    #                                         'logical_CS':True}
-    methods_dict['uniform'] = {
-        'method_name': 'uniform',
-        'use_CV': False,
-        'lambda_max': lambda_max
-    }
-    # methods_dict['uniform+logical'] =  {'method_name':'uniform', 'use_CV':False, 'lambda_max':lambda_max, 'intersect':True,
-    #                                         'logical_CS':True}
+    if comp_cs is None:
+        methods_dict['propM'] = {
+            'method_name': 'propM',
+            'use_CV': False,
+            'lambda_max': lambda_max
+        }
+        # methods_dict['propM+logical'] =  {'method_name':'propM', 'use_CV':False, 'lambda_max':lambda_max, 'intersect':True,
+        #                                         'logical_CS':True}
+        methods_dict['uniform'] = {
+            'method_name': 'uniform',
+            'use_CV': False,
+            'lambda_max': lambda_max
+        }
+        if cs != 'betting':
+            for key in methods_dict:
+                methods_dict[key]['cs'] = cs
+    else:
+        for cs in ['Bet', 'Hoef.', 'Emp. Bern.']:
+            methods_dict[cs] = {
+                'method_name': 'propM',
+                'cs': cs,
+                'use_CV': False,
+                'lambda_max': lambda_max,
+            }
+
+        # methods_dict['uniform+logical'] =  {'method_name':'uniform', 'use_CV':False, 'lambda_max':lambda_max, 'intersect':True,
+        #                                         'logical_CS':True}
     return methods_dict
 
 
@@ -44,7 +59,8 @@ def CSexperiment(M_ranges,
                  inv_prop=True,
                  nG=100,
                  save_fig=False,
-                 plot_CS_width=True):
+                 plot_CS_width=True,
+                 seed: Optional[int] = None):
     N2 = N - N1
     if inv_prop:
         title = f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto 1/\pi$'
@@ -58,9 +74,12 @@ def CSexperiment(M_ranges,
                            N=N,
                            M_ranges=M_ranges,
                            f_ranges=f_ranges,
-                           a=a)
+                           a=a,
+                           seed=seed)
+
     # create the methods dict
-    methods_dict = get_methods_dict(lambda_max=lambda_max)
+    methods_dict = get_methods_dict(lambda_max=lambda_max,
+                                    comp_cs=args.method_suite == 'comp_cs')
     # create the figure information dictionary
     xlabel = r'Sample Size ($n$) '
     if plot_CS_width:
@@ -101,11 +120,11 @@ def HistExperiment1(M_ranges,
                     opacity=0.7,
                     num_trials=20):
     if inv_prop:
-        title = f'Stopping Times Distribution \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto 1/\pi$'
+        title = 'Stopping Times Distribution \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto 1/\pi$'  # NOQA
         figname = f'../data/NoSideInfoHist_f_inv_propto_M_large_{N1}'
         f_ranges = [f_ranges[1], f_ranges[0]]
     else:
-        title = f'Stopping Times Distribution \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto \pi$'
+        title = 'Stopping Times Distribution \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto \pi$'  # NOQA
         figname = f'../data/NoSideInfoHist_f_propto_M_large_{N1}'
         # assume the original f values are proportional to M
         # so we don't need any modification here
@@ -177,7 +196,8 @@ if __name__ == '__main__':
                      inv_prop=inv_prop,
                      nG=nG,
                      save_fig=args.out_path,
-                     plot_CS_width=True)
+                     plot_CS_width=True,
+                     seed=args.seed)
 
     if HistExpt:
         HistExperiment1(M_ranges,
