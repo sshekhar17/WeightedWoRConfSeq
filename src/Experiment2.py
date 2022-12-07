@@ -12,25 +12,44 @@ from tqdm import tqdm
 
 
 # Two experiments
-def get_methods_dict(lambda_max=2, f_over_S_range=None):
+def get_methods_dict(lambda_max=2,
+                     f_over_S_range=None,
+                     cs='Bet',
+                     method_suite='default'):
     """Generate the methods dictionary for this experiment."""
     methods_dict = {}
-    methods_dict['propM'] = {
-        'method_name': 'propM',
-        'use_CV': False,
-        'lambda_max': lambda_max
-    }
-    methods_dict['propMS'] = {
-        'method_name': 'propMS',
-        'use_CV': False,
-        'lambda_max': lambda_max,
-        'f_over_S_range': f_over_S_range
-    }
+    if method_suite == 'default':
+        methods_dict['propM'] = {
+            'method_name': 'propM',
+            'use_CV': False,
+            'lambda_max': lambda_max
+        }
+        methods_dict['propMS'] = {
+            'method_name': 'propMS',
+            'use_CV': False,
+            'lambda_max': lambda_max,
+            'f_over_S_range': f_over_S_range
+        }
+        if cs != 'Bet':
+            for key in methods_dict:
+                methods_dict[key]['cs'] = cs
+    else:
+        cses = ['Hoef.', 'Emp. Bern.'
+                ] + ([] if method_suite == 'comp_cs' else ['Bet'])
+        for cs in cses:
+            methods_dict[cs] = {
+                'method_name': 'propMS',
+                'cs': cs,
+                'use_CV': False,
+                'lambda_max': lambda_max,
+                'f_over_S_range': f_over_S_range
+            }
     return methods_dict
 
 
 def CSexperiment2(M_ranges,
                   f_ranges,
+                  method_suite,
                   N=200,
                   N1=60,
                   lambda_max=2,
@@ -39,6 +58,7 @@ def CSexperiment2(M_ranges,
                   nG=100,
                   save_fig=False,
                   plot_CS_width=True,
+                  post_process='logical',
                   f_over_S_range=None):
     N2 = N - N1
     if inv_prop:
@@ -60,7 +80,8 @@ def CSexperiment2(M_ranges,
                            a=a)
     # create the methods dict
     methods_dict = get_methods_dict(lambda_max=lambda_max,
-                                    f_over_S_range=f_over_S_range)
+                                    f_over_S_range=f_over_S_range,
+                                    method_suite=method_suite)
     # create the figure information dictionary
     xlabel = r'Sample Size ($n$) '
     if plot_CS_width:
@@ -84,7 +105,10 @@ def CSexperiment2(M_ranges,
                            return_vals=False,
                            plot_results=True,
                            plot_CS_width=plot_CS_width,
-                           post_process=True)
+                           post_process=post_process
+                           in ['separate', 'logical'],
+                           return_post_processed_separately=post_process
+                           in ['separate'])
 
 
 def HistExperiment2(M_ranges,
@@ -115,7 +139,8 @@ def HistExperiment2(M_ranges,
         # so we don't need any modification here
     # generate the dictionary with methods information
     methods_dict = get_methods_dict(lambda_max=lambda_max,
-                                    f_over_S_range=f_over_S_range)
+                                    f_over_S_range=f_over_S_range,
+                                    method_suite=method_suite)
     # generate the dictionary with histogram plotting information
     StoppingTimesDict = getStoppingTimesDistribution(methods_dict,
                                                      N,
@@ -173,6 +198,7 @@ if __name__ == '__main__':
     if CSExpt:
         CSexperiment2(M_ranges,
                       f_ranges,
+                      args.method_suite,
                       N=N,
                       N1=N1,
                       lambda_max=lambda_max,
@@ -180,7 +206,8 @@ if __name__ == '__main__':
                       inv_prop=inv_prop,
                       nG=nG,
                       save_fig=save_fig,
-                      plot_CS_width=True,
+                      plot_CS_width=args.cs_metric == 'width',
+                      post_process=args.post_process,
                       f_over_S_range=f_over_S_range)
 
     if HistExpt:
@@ -188,8 +215,10 @@ if __name__ == '__main__':
         num_trials = 250
         HistExperiment2(M_ranges,
                         f_ranges,
+                        args.method_suite,
                         N=N,
                         N1=N1,
+                        lambda_max=lambda_max,
                         epsilon=epsilon,
                         inv_prop=inv_prop,
                         verbose=True,

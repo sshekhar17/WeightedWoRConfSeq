@@ -15,25 +15,38 @@ from ExperimentBase import *
 from tqdm import tqdm
 
 
-def get_methods_dict(lambda_max=2, beta_max=0.5):
+def get_methods_dict(lambda_max=2, beta_max=0.5, method_suite='default'):
     """Generate the methods dictionary for this experiment."""
     methods_dict = {}
-    methods_dict['propM'] = {
-        'method_name': 'propM',
-        'use_CV': False,
-        'lambda_max': lambda_max
-    }
-    methods_dict['propM+CV'] = {
-        'method_name': 'propM',
-        'use_CV': True,
-        'lambda_max': lambda_max,
-        'beta_max': beta_max
-    }
+    if method_suite == 'default':
+        methods_dict['propM'] = {
+            'method_name': 'propM',
+            'use_CV': False,
+            'lambda_max': lambda_max
+        }
+        methods_dict['propM+CV'] = {
+            'method_name': 'propM',
+            'use_CV': True,
+            'lambda_max': lambda_max,
+            'beta_max': beta_max
+        }
+    else:
+        cses = ['Hoef.', 'Emp. Bern.'
+                ] + ([] if method_suite == 'comp_cs' else ['Bet'])
+        for cs in cses:
+            methods_dict[cs] = {
+                'method_name': 'propM',
+                'cs': cs,
+                'use_CV': True,
+                'lambda_max': lambda_max,
+                'beta_max': beta_max
+            }
     return methods_dict
 
 
 def CSexperiment3(M_ranges,
                   f_ranges,
+                  method_suite,
                   N=200,
                   N1=60,
                   lambda_max=2,
@@ -57,7 +70,8 @@ def CSexperiment3(M_ranges,
                            f_ranges=f_ranges,
                            a=a)
     # create the methods dict
-    methods_dict = get_methods_dict(lambda_max=lambda_max)
+    methods_dict = get_methods_dict(lambda_max=lambda_max,
+                                    method_suite=method_suite)
     # create the figure information dictionary
     xlabel = r'Sample Size ($n$) '
     if plot_CS_width:
@@ -86,6 +100,7 @@ def CSexperiment3(M_ranges,
 
 def HistExperiment3(M_ranges,
                     f_ranges,
+                    method_suite,
                     N=200,
                     N1=100,
                     epsilon=0.05,
@@ -109,7 +124,9 @@ def HistExperiment3(M_ranges,
         # assume the original f values are proportional to M
         # so we don't need any modification here
     # generate the dictionary with methods information
-    methods_dict = get_methods_dict(lambda_max=lambda_max, beta_max=beta_max)
+    methods_dict = get_methods_dict(lambda_max=lambda_max,
+                                    beta_max=beta_max,
+                                    method_suite=method_suite)
     # generate the dictionary with histogram plotting information
     StoppingTimesDict = getStoppingTimesDistribution(methods_dict,
                                                      N,
@@ -165,6 +182,7 @@ def GainExperiment(AA,
     for i, a in tqdm(list(enumerate(AA))):
         ST, STcv = HistExperiment3(M_ranges,
                                    f_ranges,
+                                   'default',
                                    N,
                                    N1,
                                    epsilon=epsilon,
@@ -238,6 +256,7 @@ if __name__ == '__main__':
     if CSExpt:
         CSexperiment3(M_ranges,
                       f_ranges,
+                      args.method_suite,
                       N,
                       N1,
                       lambda_max,
@@ -251,6 +270,7 @@ if __name__ == '__main__':
         epsilon = 0.05
         HistExperiment3(M_ranges,
                         f_ranges,
+                        args.method_suite,
                         N,
                         N1,
                         epsilon=epsilon,

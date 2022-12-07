@@ -17,7 +17,7 @@ def hoeffding_boundaries(xs,
     inv_sum_t = np.cumsum(1 / ct_sq)
 
     if lambda_strategy is None:
-        lambda_strategy = 'opt_uniform'
+        lambda_strategy = 'approx_uniform'
     if lambda_strategy == 'approx_uniform':
         lambda_den_t = t * np.log(t + 1) * avg_c_sq_t
     elif lambda_strategy == 'approx_fixed':

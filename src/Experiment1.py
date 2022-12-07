@@ -17,10 +17,10 @@ from ExperimentBase import *
 # Two experiments
 
 
-def get_methods_dict(lambda_max=2, cs='betting', comp_cs=None):
+def get_methods_dict(lambda_max=2, cs='Bet', method_suite='default'):
     """Generate the methods dictionary for this experiment."""
     methods_dict = {}
-    if comp_cs is None:
+    if method_suite == 'default':
         methods_dict['propM'] = {
             'method_name': 'propM',
             'use_CV': False,
@@ -33,11 +33,13 @@ def get_methods_dict(lambda_max=2, cs='betting', comp_cs=None):
             'use_CV': False,
             'lambda_max': lambda_max
         }
-        if cs != 'betting':
+        if cs != 'Bet':
             for key in methods_dict:
                 methods_dict[key]['cs'] = cs
     else:
-        for cs in ['Bet', 'Hoef.', 'Emp. Bern.']:
+        cses = ['Hoef.', 'Emp. Bern.'
+                ] + ([] if method_suite == 'comp_cs' else ['Bet'])
+        for cs in cses:
             methods_dict[cs] = {
                 'method_name': 'propM',
                 'cs': cs,
@@ -52,6 +54,7 @@ def get_methods_dict(lambda_max=2, cs='betting', comp_cs=None):
 
 def CSexperiment(M_ranges,
                  f_ranges,
+                 method_suite,
                  N=200,
                  N1=60,
                  lambda_max=2,
@@ -80,7 +83,7 @@ def CSexperiment(M_ranges,
 
     # create the methods dict
     methods_dict = get_methods_dict(lambda_max=lambda_max,
-                                    comp_cs=args.method_suite == 'comp_cs')
+                                    method_suite=method_suite)
     # create the figure information dictionary
     xlabel = r'Sample Size ($n$) '
     if plot_CS_width:
@@ -112,8 +115,10 @@ def CSexperiment(M_ranges,
 
 def HistExperiment1(M_ranges,
                     f_ranges,
+                    method_suite,
                     N=200,
                     N1=100,
+                    lambda_max=2,
                     epsilon=0.05,
                     inv_prop=True,
                     verbose=False,
@@ -132,7 +137,8 @@ def HistExperiment1(M_ranges,
         # assume the original f values are proportional to M
         # so we don't need any modification here
     # generate the dictionary with methods information
-    methods_dict = get_methods_dict()
+    methods_dict = get_methods_dict(lambda_max=lambda_max,
+                                    method_suite=method_suite)
     # generate the dictionary with histogram plotting information
     StoppingTimesDict = getStoppingTimesDistribution(
         methods_dict,
@@ -174,7 +180,7 @@ if __name__ == '__main__':
     #### Set experiment options
     CSExpt = args.mode == 'cs'
     HistExpt = not CSExpt
-    N = 200
+    N = args.N
     N1 = int(np.floor(args.small_prop * N))
     inv_prop = args.f_method == 'inv'
 
@@ -192,6 +198,7 @@ if __name__ == '__main__':
     if CSExpt:
         CSexperiment(M_ranges,
                      f_ranges,
+                     args.method_suite,
                      N=N,
                      N1=N1,
                      lambda_max=lambda_max,
@@ -206,8 +213,10 @@ if __name__ == '__main__':
     if HistExpt:
         HistExperiment1(M_ranges,
                         f_ranges,
+                        args.method_suite,
                         N=N,
                         N1=N1,
+                        lambda_max=lambda_max,
                         epsilon=epsilon,
                         inv_prop=inv_prop,
                         verbose=True,

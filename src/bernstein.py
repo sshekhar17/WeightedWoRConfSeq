@@ -65,7 +65,7 @@ def eb_boundary(xs: np.ndarray,
         lambda_den_t = c_sq_t * avg_var_t * pred_inv_sum_t * (t0 / t)
 
     lambda_num = 8 * np.log(1 / alpha)
-    lambda_t = np.minimum(np.sqrt(lambda_num / lambda_den_t), 1 / (1.1 * c_t))
+    lambda_t = np.minimum(np.sqrt(lambda_num / lambda_den_t), 1 / (2 * c_t))
     lambda_sum_t = np.cumsum(lambda_t)
     mu_hat_t = np.cumsum(lambda_t * xs) / lambda_sum_t
 

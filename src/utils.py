@@ -296,6 +296,10 @@ def get_arg_values():
         help=
         'Choose whether to do `separate`, `logical`, or `none` post processing of CSes.'
     )
+    parser.add_argument('--N',
+                        type=int,
+                        default=200,
+                        help='Number of samples in each trial.')
     parser.add_argument('--seed', type=int, default=322, help='RNG seed')
     args = parser.parse_args()
     out_dir = os.path.dirname(args.out_path)

@@ -484,12 +484,23 @@ def run_one_expt(M,
                 alpha=alpha,
                 lambda_strategy=lambda_strategy)
         else:  # cs == 'Emp. Bern.':
-            LowerCS, UpperCS = (
-                eb_boundary(np.array(Z_t),
-                            np.array(lbs),
-                            alpha / 2,
-                            lambda_strategy=lambda_strategy), 1. -
-                eb_boundary(np.array(Z_om_t), np.array(lb_oms), alpha / 2))
+            shift_pif = np.append(0, (Pi * f)[I_t][:-1])
+            normal_est = np.cumsum(Z_t + shift_pif) / np.arange(1, N + 1)
+            normal_est = np.append(0.5, normal_est[:-1])
+            rev_shift_pif = np.append(0, (Pi * (1 - f))[I_t][:-1])
+            rev_est = np.cumsum(Z_om_t + rev_shift_pif) / np.arange(1, N + 1)
+            rev_est = np.append(0.5, rev_est[:-1])
+            LowerCS, UpperCS = (eb_boundary(np.array(Z_t),
+                                            np.array(lbs),
+                                            alpha / 2,
+                                            ests=normal_est,
+                                            lambda_strategy=lambda_strategy),
+                                1. -
+                                eb_boundary(np.array(Z_om_t),
+                                            np.array(lb_oms),
+                                            alpha / 2,
+                                            ests=rev_est,
+                                            lambda_strategy=lambda_strategy))
     if logical_CS or intersect:
         LowerCS, UpperCS = predictive_correction1(LowerCS,
                                                   UpperCS,
@@ -509,9 +520,11 @@ def main(A=0.1, use_CV=False):
     N1 = 150
     N2 = N - N1
     f_over_S_range = [1 - A, 1 + A]
-    f_ranges = [[0.4, 0.5], [1e-3, 2 * 1e-3]]
+    #f_ranges = [[0.4, 0.5], [1e-3, 2 * 1e-3]]
+    f_ranges = [[0.4, 0.5], [0.4, 0.5]]
     # M_ranges = [ [1e5, 1e6], [1e2, 1*1e3]],
-    M_ranges = [[1e2, 2e2], [5e2, 8e2]]
+    #M_ranges = [[1e2, 2e2], [5e2, 8e2]]
+    M_ranges = [[1e2, 2e2], [1e2, 2e2]]
     M, f, S = generate_MFS(
         N_vals=(N1, N2),
         N=N,  # total number of transactions = sum(N_vals)
@@ -521,56 +534,42 @@ def main(A=0.1, use_CV=False):
 
     nG = 100
     lambda_max = 2
-    result_propMS = run_one_expt(M,
-                                 f,
-                                 S,
-                                 method_name='propMS',
-                                 lambda_max=lambda_max,
-                                 beta_max=0.5,
-                                 nG=nG,
-                                 use_CV=use_CV,
-                                 f_over_S_range=f_over_S_range,
-                                 alpha=0.05,
-                                 logical_CS=False,
-                                 intersect=False,
-                                 return_payoff=False)
-    grid, _, L1, U1, _, _ = result_propMS
+    fig = plt.figure()
+    ax = plt.gca()
+    cs_method_pairs = [
+        #('Hoef.', 'uniform', 'opt_uniform'),
+        ('Emp. Bern.', 'propM', 'opt_uniform'),
+        #           ('Hoef.', 'uniform', 'approx_uniform'),
+        ('Emp. Bern.', 'propM', 'approx_uniform')
+    ]
+    for cs, method, ls in cs_method_pairs:
+        result_propMS = run_one_expt(M,
+                                     f,
+                                     S,
+                                     cs=cs,
+                                     method_name=method,
+                                     lambda_max=lambda_max,
+                                     beta_max=0.5,
+                                     nG=nG,
+                                     use_CV=use_CV,
+                                     f_over_S_range=f_over_S_range,
+                                     alpha=0.05,
+                                     logical_CS=False,
+                                     intersect=False,
+                                     lambda_strategy=ls,
+                                     return_payoff=False)
+        grid, _, L1, U1, _, _ = result_propMS
 
-    result_propM = run_one_expt(M,
-                                f,
-                                S,
-                                method_name='propM',
-                                lambda_max=lambda_max,
-                                beta_max=0.5,
-                                nG=nG,
-                                use_CV=use_CV,
-                                f_over_S_range=None,
-                                alpha=0.05,
-                                logical_CS=False,
-                                intersect=False,
-                                return_payoff=False)
-    _, _, L2, U2, _, _ = result_propM
-
-    result_unif = run_one_expt(M,
-                               f,
-                               S,
-                               method_name='uniform',
-                               lambda_max=lambda_max,
-                               beta_max=0.5,
-                               nG=nG,
-                               use_CV=use_CV,
-                               f_over_S_range=None,
-                               alpha=0.05,
-                               logical_CS=False,
-                               intersect=False,
-                               return_payoff=False)
-    _, _, L3, U3, _, _ = result_unif
-
-    NN = np.arange(1, N + 1)
-    plt.plot(NN, U1 - L1, label='propMS')
-    plt.plot(NN, U2 - L2, label='propM')
-    plt.plot(NN, U3 - L3, label='uniform')
+        NN = np.arange(1, N + 1)
+        ax.plot(NN, U1 - L1, label=f'{cs} {method} {ls}')
+        # prev_p = ax.plot(NN, U1, label=f'{cs} {method} {ls}')
+        # ax.plot(NN, L1, color=prev_p[0].get_color())
+    ax.axhline(np.sum(M / np.sum(M) * f), linestyle='dashed')
+    ax.set_ylabel('CS width')
+    ax.set_xlabel('$n$')
     plt.legend()
+    fig.tight_layout()
+    fig.savefig('test_results.png', dpi=300)
 
 
 def testCV(A=0.1):
@@ -627,4 +626,5 @@ def testCV(A=0.1):
 
 
 if __name__ == '__main__':
-    testCV(0.9999)
+    #testCV(0.9999)
+    main()
