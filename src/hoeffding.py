@@ -17,20 +17,20 @@ def hoeffding_boundaries(xs,
     inv_sum_t = np.cumsum(1 / ct_sq)
 
     if lambda_strategy is None:
-        lambda_strategy = 'approx_uniform'
+        lambda_strategy = 'opt_uniform'
     if lambda_strategy == 'approx_uniform':
-        lambda_den_t = t * np.log(t + 1) * avg_c_sq_t
+        lambda_den_t = t * np.log(t + 1) * ct_sq
     elif lambda_strategy == 'approx_fixed':
         lambda_den_t = t0 * avg_c_sq_t
     elif lambda_strategy == 'opt_uniform':
-        lambda_den_t = ct_sq * inv_sum_t * np.log(inv_sum_t + 1)
+        lambda_den_t = ct_sq * inv_sum_t * np.log(t + 1)
     elif lambda_strategy == 'opt_fixed':
         lambda_den_t = ct_sq * inv_sum_t * (t0 / t)
 
     lambda_t = np.minimum(np.sqrt(lambda_num / lambda_den_t), 1 / (2 * c_t))
     lambda_sum_t = np.cumsum(lambda_t)
     margin_t = (np.log(2 / alpha) +
-                np.cumsum(np.square(lambda_t))) / lambda_sum_t
+                np.cumsum(np.square(lambda_t) * ct_sq / 8)) / lambda_sum_t
     mu_hat_t = np.cumsum(lambda_t * xs) / lambda_sum_t
     return mu_hat_t - margin_t, mu_hat_t + margin_t
 

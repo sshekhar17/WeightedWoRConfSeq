@@ -21,7 +21,8 @@ def plot_CS(N,
             plot_CS_width=False,
             palette=None,
             save_fig=False,
-            fig_info_dict={}):
+            fig_info_dict={},
+            diagnostics=None):
     # default color palette
     # if palette is None:
     #     palette = sns.color_palette(palette='tab10', n_colors=len(Results_Dict)+1)
@@ -51,10 +52,10 @@ def plot_CS(N,
         ax.plot(NN,
                 m_star * np.ones(NN.shape),
                 '--',
-                label=r'$m^*$',
+                label=f'$m^*$={m_star}',
                 color='k')
     if len(fig_info_dict) == 0:
-        title = r'Confidence Sequence for $m^*$'
+        title = f'Confidence Sequence for $m^*$={m_star}'
         xlabel = 'Number of queries'
         ylabel = ''
         figname = '../data/tempCS'
@@ -69,11 +70,35 @@ def plot_CS(N,
     ax.legend(fontsize=13)
     fig.tight_layout()
     # save the figure
+    if diagnostics is not None:
+        name, lower_d, upper_d = diagnostics
+        diag_figs = []
+        for diag in [lower_d, upper_d]:
+            diag_names = [
+                '$\\lambda_t$', '$V_t$', '$c_t$', 'Avg. $V_t$',
+                'Avg. $V_tc_t$', 'Pred. avg. $V_tc_t$', 'Pred. $\sum 1/c_t^2$',
+                'Ind margin t.', 'Total margin t.', '$\widehat{\mu}_t$'
+            ]
+            figtmp, axes = plt.subplots(len(diag_names),
+                                        1,
+                                        sharex=True,
+                                        figsize=(10, len(diag_names) * 2),
+                                        squeeze=False)
+            for idx, (diag_name, arr) in enumerate(zip(diag_names, diag)):
+                t = np.arange(1, arr.shape[0] + 1)
+                axes[idx, 0].plot(t, arr, label=diag_name)
+                axes[idx, 0].set_title(diag_name)
+            diag_figs.append(figtmp)
+
     if save_fig:
         figname_ = figname + '.tex' if save_fig is True else save_fig
         tpl.save(figname_, axis_width=r'\figwidth', axis_height=r'\figheight')
-        picname_ = os.path.splitext(figname_)[0] + '.png'
+        basename = os.path.splitext(figname_)[0]
+        picname_ = basename + '.png'
         fig.savefig(picname_, dpi=300)
+        if diagnostics is not None:
+            diag_figs[0].savefig(basename + '_lower_diagnostics.png', dpi=300)
+            diag_figs[1].savefig(basename + '_upper_diagnostics.png', dpi=300)
 
 
 def plot_hists(N,
@@ -90,7 +115,7 @@ def plot_hists(N,
                                     n_colors=len(StoppingTimesDict) + 1)
     #plot the Confidence sequences
     NN = np.arange(1, N + 1)
-    plt.figure()
+    fig = plt.figure()
     for i, key in enumerate(StoppingTimesDict):
         color = ColorsDict[key]
 
@@ -126,6 +151,8 @@ def plot_hists(N,
         figname_ = figname + '.tex' if save_fig is True else save_fig
         tpl.save(figname_, axis_width=r'\figwidth', axis_height=r'\figheight')
         # plt.savefig(figname, dpi=450)
+        picname_ = os.path.splitext(figname_)[0] + '.png'
+        fig.savefig(picname_, dpi=300)
 
 
 def CompareMethodsOneTrial(M,
@@ -160,7 +187,11 @@ def CompareMethodsOneTrial(M,
     Results_Dict = {}
     for key in methods_dict:
         kwargs = methods_dict[key]
-        _, _, LowerCS, UpperCS, Idx, _ = run_one_expt(M, f, S, nG=nG, **kwargs)
+        _, _, LowerCS, UpperCS, Idx, _, diagnostics = run_one_expt(M,
+                                                                   f,
+                                                                   S,
+                                                                   nG=nG,
+                                                                   **kwargs)
         if post_process:
             LowerCS_, UpperCS_ = predictive_correction1(LowerCS,
                                                         UpperCS,
@@ -180,6 +211,7 @@ def CompareMethodsOneTrial(M,
         plot_CS(N,
                 M,
                 f,
+                diagnostics=diagnostics,
                 Results_Dict=Results_Dict,
                 plot_CS_width=plot_CS_width,
                 save_fig=save_fig,

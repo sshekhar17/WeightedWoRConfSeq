@@ -409,6 +409,7 @@ def run_one_expt(M,
         cv_vals = None
         beta_vals = None
     Error_flag = False
+    diagonostics = None
     if cs == 'Bet':
         for t in range(N):
             result = one_step_update(grid=grid,
@@ -460,10 +461,12 @@ def run_one_expt(M,
                     unseen] / q_t + np.sum(Pi[It] * (1 - f[It])) + np.sum(Pi[
                         unseen] * S_adj_om)
             else:
-                possible_Z = lambda f_: f_ * Pi[unseen] / q_t + np.sum(Pi[
-                    I_t] * f[I_t])
-                possible_Z_om = lambda f_: f_ * Pi[unseen] / q_t + np.sum(Pi[
-                    I_t] * (1. - f[I_t]))
+                # possible_Z = lambda f_: f_ * Pi[unseen] / q_t + np.sum(Pi[
+                #     I_t] * f[I_t])
+                # possible_Z_om = lambda f_: f_ * Pi[unseen] / q_t + np.sum(Pi[
+                #     I_t] * (1. - f[I_t]))
+                possible_Z = lambda f_: f_ * Pi[unseen] / q_t
+                possible_Z_om = lambda f_: f_ * Pi[unseen] / q_t
             ubs.append(np.max(possible_Z(1)))
             lbs.append(np.min(possible_Z(0)))
             lb_oms.append(np.min(possible_Z_om(0)))
@@ -490,17 +493,22 @@ def run_one_expt(M,
             rev_shift_pif = np.append(0, (Pi * (1 - f))[I_t][:-1])
             rev_est = np.cumsum(Z_om_t + rev_shift_pif) / np.arange(1, N + 1)
             rev_est = np.append(0.5, rev_est[:-1])
-            LowerCS, UpperCS = (eb_boundary(np.array(Z_t),
-                                            np.array(lbs),
-                                            alpha / 2,
-                                            ests=normal_est,
-                                            lambda_strategy=lambda_strategy),
-                                1. -
-                                eb_boundary(np.array(Z_om_t),
-                                            np.array(lb_oms),
-                                            alpha / 2,
-                                            ests=rev_est,
-                                            lambda_strategy=lambda_strategy))
+            LowerCS, lower_diag = eb_boundary(np.array(Z_t),
+                                              Pi[I_t],
+                                              f[I_t],
+                                              np.array(lbs),
+                                              alpha / 2,
+                                              ests=normal_est,
+                                              lambda_strategy=lambda_strategy)
+            ucs, upper_diag = eb_boundary(np.array(Z_om_t),
+                                          Pi[I_t], (1 - f[I_t]),
+                                          np.array(lb_oms),
+                                          alpha / 2,
+                                          ests=rev_est,
+                                          lambda_strategy=lambda_strategy)
+            UpperCS = 1. - ucs
+            diagonostics = ('eb', lower_diag, upper_diag)
+
     if logical_CS or intersect:
         LowerCS, UpperCS = predictive_correction1(LowerCS,
                                                   UpperCS,
@@ -512,7 +520,7 @@ def run_one_expt(M,
     if return_payoff:
         return grid, Wealth, LowerCS, UpperCS, Transaction_Indices, Error_flag, Payoff_vals
     else:
-        return grid, Wealth, LowerCS, UpperCS, Transaction_Indices, Error_flag
+        return grid, Wealth, LowerCS, UpperCS, Transaction_Indices, Error_flag, diagonostics
 
 
 def main(A=0.1, use_CV=False):
