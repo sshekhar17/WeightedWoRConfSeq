@@ -110,7 +110,8 @@ def CSexperiment(M_ranges,
                            post_process=post_process
                            in ['separate', 'logical'],
                            return_post_processed_separately=post_process
-                           in ['separate'])
+                           in ['separate'],
+                           seed=seed)
 
 
 def HistExperiment1(M_ranges,
@@ -175,11 +176,69 @@ def HistExperiment1(M_ranges,
                    opacity=opacity)
 
 
+def CovExperiment1(M_ranges,
+                   f_ranges,
+                   method_suite,
+                   N=200,
+                   N1=100,
+                   lambda_max=2,
+                   epsilon=0.05,
+                   inv_prop=True,
+                   verbose=False,
+                   plot_results=False,
+                   save_fig=False,
+                   a=0.5,
+                   opacity=0.7,
+                   num_trials=20):
+    if inv_prop:
+        title = 'Error rate \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto 1/\pi$'  # NOQA
+        figname = f'../data/NoSideInfoHist_f_inv_propto_M_large_{N1}'
+        f_ranges = [f_ranges[1], f_ranges[0]]
+    else:
+        title = 'Error rate \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto \pi$'  # NOQA
+        figname = f'../data/NoSideInfoError_f_propto_M_large_{N1}'
+        # assume the original f values are proportional to M
+        # so we don't need any modification here
+    # generate the dictionary with methods information
+    methods_dict = get_methods_dict(lambda_max=lambda_max,
+                                    method_suite=method_suite)
+    # generate the dictionary with histogram plotting information
+    StoppingTimesDict = getCoverage(methods_dict,
+                                    N,
+                                    N1,
+                                    a=a,
+                                    M_ranges=M_ranges,
+                                    f_ranges=f_ranges,
+                                    num_trials=num_trials,
+                                    save_fig=False,
+                                    post_process=True,
+                                    epsilon=epsilon,
+                                    return_post_processed_separately=True)
+
+    if plot_results:
+        xlabel = '# of samples'
+        ylabel = 'Prop. of trials not in CS'
+        hist_info_dict = {
+            'title': title,
+            'figname': figname,
+            'xlabel': xlabel,
+            'ylabel': ylabel,
+            'ymax': 1
+        }
+        plot_error_rate(N=N,
+                        alpha=0.05,
+                        StoppingTimesDict=StoppingTimesDict,
+                        save_fig=save_fig,
+                        hist_info_dict=hist_info_dict,
+                        opacity=opacity)
+
+
 if __name__ == '__main__':
     args = get_arg_values()
     #### Set experiment options
     CSExpt = args.mode == 'cs'
-    HistExpt = not CSExpt
+    HistExpt = args.mode == 'hist'
+    CovExpt = args.mode == 'coverage'
     N = args.N
     N1 = int(np.floor(args.small_prop * N))
     inv_prop = args.f_method == 'inv'
@@ -192,7 +251,7 @@ if __name__ == '__main__':
     M_ranges = [[1e5, 1e6], [1e2, 1 * 1e3]]
     f_ranges = [[0.4, 0.5], [1e-3, 2 * 1e-3]]
     epsilon = 0.05
-    num_trials = 500
+    num_trials = 5000
 
     #### Run the experiments
     if CSExpt:
@@ -224,3 +283,17 @@ if __name__ == '__main__':
                         save_fig=args.out_path,
                         a=a,
                         num_trials=num_trials)
+    if CovExpt:
+        CovExperiment1(M_ranges,
+                       f_ranges,
+                       args.method_suite,
+                       N=N,
+                       N1=N1,
+                       lambda_max=lambda_max,
+                       epsilon=epsilon,
+                       inv_prop=inv_prop,
+                       verbose=True,
+                       plot_results=True,
+                       save_fig=args.out_path,
+                       a=a,
+                       num_trials=num_trials)

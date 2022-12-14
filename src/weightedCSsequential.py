@@ -392,7 +392,8 @@ def run_one_expt(M,
                  intersect=False,
                  return_payoff=False,
                  lambda_strategy=None,
-                 cv_max=np.inf):
+                 cv_max=np.inf,
+                 seed=None):
     N = len(M)
     LowerCS, UpperCS = np.zeros((N, )), np.ones((N, ))
     grid = np.linspace(0, 1, nG)
@@ -409,7 +410,9 @@ def run_one_expt(M,
         cv_vals = None
         beta_vals = None
     Error_flag = False
-    diagonostics = None
+    diagnostics = None
+    if seed is not None:
+        np.random.seed(seed)
     if cs == 'Bet':
         for t in range(N):
             result = one_step_update(grid=grid,
@@ -453,23 +456,22 @@ def run_one_expt(M,
             if use_CV:
                 S_adj = np.minimum(S[unseen], cv_max / q_t)
                 possible_Z = lambda f_: (f_ - S_adj) * Pi[
-                    unseen] / q_t + np.sum(Pi[It] * f[It]) + np.sum(Pi[unseen]
-                                                                    * S_adj)
+                    unseen] / q_t + np.sum(Pi[unseen] * S_adj)
 
                 S_adj_om = np.minimum(1 - S[unseen], cv_max / q_t)
                 possible_Z_om = lambda f_: (f_ - S_adj_om) * Pi[
-                    unseen] / q_t + np.sum(Pi[It] * (1 - f[It])) + np.sum(Pi[
-                        unseen] * S_adj_om)
+                    unseen] / q_t + np.sum(Pi[unseen] * S_adj_om)
+                lbs.append(np.min(possible_Z(0)))
+                lb_oms.append(np.min(possible_Z_om(0)))
             else:
                 # possible_Z = lambda f_: f_ * Pi[unseen] / q_t + np.sum(Pi[
                 #     I_t] * f[I_t])
                 # possible_Z_om = lambda f_: f_ * Pi[unseen] / q_t + np.sum(Pi[
                 #     I_t] * (1. - f[I_t]))
                 possible_Z = lambda f_: f_ * Pi[unseen] / q_t
-                possible_Z_om = lambda f_: f_ * Pi[unseen] / q_t
+                lbs.append(np.min(possible_Z(0)))
+                lb_oms.append(np.min(possible_Z(0)))
             ubs.append(np.max(possible_Z(1)))
-            lbs.append(np.min(possible_Z(0)))
-            lb_oms.append(np.min(possible_Z_om(0)))
 
             sample_idx = np.random.choice(np.arange(len(unseen)), p=q_t)
             Z_t.append(possible_Z(f[unseen])[sample_idx])
@@ -478,14 +480,18 @@ def run_one_expt(M,
             unseen.remove(unseen[sample_idx])
 
         Transaction_Indices = np.array(I_t)
-
         if cs == 'Hoef.':
-            LowerCS, UpperCS = hoeffding_boundaries(
-                xs=np.array(Z_t),
+            #xs = np.array(Z_t) + np.append(0, (Pi[I_t] * f[I_t])[:-1])
+            #print(xs)
+            LowerCS, UpperCS, hoef_diagnostics = hoeffding_boundaries(
+                Z_t=np.array(Z_t),
+                pi=Pi[I_t],
+                f=f[I_t],
                 lbs=np.array(lbs),
                 ubs=np.array(ubs),
                 alpha=alpha,
                 lambda_strategy=lambda_strategy)
+            diagnostics = ('hoef', hoef_diagnostics, None)
         else:  # cs == 'Emp. Bern.':
             shift_pif = np.append(0, (Pi * f)[I_t][:-1])
             normal_est = np.cumsum(Z_t + shift_pif) / np.arange(1, N + 1)
@@ -493,6 +499,8 @@ def run_one_expt(M,
             rev_shift_pif = np.append(0, (Pi * (1 - f))[I_t][:-1])
             rev_est = np.cumsum(Z_om_t + rev_shift_pif) / np.arange(1, N + 1)
             rev_est = np.append(0.5, rev_est[:-1])
+            # xs = np.array(Z_t) + np.append(0, (Pi[I_t] * f[I_t])[:-1])
+            # print(xs)
             LowerCS, lower_diag = eb_boundary(np.array(Z_t),
                                               Pi[I_t],
                                               f[I_t],
@@ -507,7 +515,7 @@ def run_one_expt(M,
                                           ests=rev_est,
                                           lambda_strategy=lambda_strategy)
             UpperCS = 1. - ucs
-            diagonostics = ('eb', lower_diag, upper_diag)
+            diagnostics = ('eb', lower_diag, upper_diag)
 
     if logical_CS or intersect:
         LowerCS, UpperCS = predictive_correction1(LowerCS,
@@ -520,7 +528,7 @@ def run_one_expt(M,
     if return_payoff:
         return grid, Wealth, LowerCS, UpperCS, Transaction_Indices, Error_flag, Payoff_vals
     else:
-        return grid, Wealth, LowerCS, UpperCS, Transaction_Indices, Error_flag, diagonostics
+        return grid, Wealth, LowerCS, UpperCS, Transaction_Indices, Error_flag, diagnostics
 
 
 def main(A=0.1, use_CV=False):

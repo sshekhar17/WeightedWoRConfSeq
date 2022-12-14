@@ -61,7 +61,7 @@ def eb_boundary(Zs: np.ndarray,
     elif lambda_strategy == 'approx_fixed':
         lambda_den_t = t0 * pred_avg_c_var_t
     elif lambda_strategy == 'opt_uniform':
-        lambda_den_t = 2 * avg_var_t * pred_inv_sum_t
+        lambda_den_t = avg_var_t * pred_inv_sum_t
     elif lambda_strategy == 'opt_fixed':
         lambda_den_t = c_sq_t * avg_var_t * pred_inv_sum_t * (t0 / t)
     elif lambda_strategy == 'oracle':
@@ -83,5 +83,5 @@ def eb_boundary(Zs: np.ndarray,
 
     diagnostics = (lambda_t, var_t, c_t, avg_var_t, avg_c_var_t,
                    pred_avg_c_var_t, pred_inv_sum_t, ind_margin, margin_t,
-                   mu_hat_t)
+                   mu_hat_t, np.cumsum(xs) / t)
     return mu_hat_t - margin_t, diagnostics
