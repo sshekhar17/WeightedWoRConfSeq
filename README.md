@@ -1,1 +1,1 @@
-## Confidence Sequence for Weighted Sampling without Replacement 
+## Confidence Sequences for Weighted Sampling without Replacement 
