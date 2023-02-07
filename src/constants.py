@@ -1,5 +1,7 @@
 import seaborn as sns
-
+"""
+Different color palettes and styles for plotting the results from the experiments
+"""
 palette = sns.color_palette(n_colors=10)
 palette_2 = sns.color_palette(n_colors=14)
 

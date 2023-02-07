@@ -1,5 +1,7 @@
 """Sequential implementation of the weighted CS using sampling WoR."""
 
+from typing import Any, Callable, Dict, List, Optional
+
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -266,24 +268,55 @@ def get_next_bet(values, betting_method='kelly', tol=1e-10, lambda_max=None):
     return lambda_
 
 
-def one_step_update(grid,
-                    wealth,
-                    seen,
-                    unseen,
-                    M,
-                    f,
-                    S,
-                    Payoff_vals,
-                    cv_vals,
-                    beta_vals,
-                    method_name='propMS',
-                    samp_func=None,
-                    samp_kwargs=None,
-                    use_CV=False,
-                    beta_max=0.5,
-                    f_over_S_range=None,
-                    lambda_max=2.5,
-                    alpha=0.05):
+def one_step_update(grid: np.ndarray,
+                    wealth: np.ndarray,
+                    seen: np.ndarray,
+                    unseen: np.ndarray,
+                    M: np.ndarray,
+                    f: np.ndarray,
+                    S: np.ndarray,
+                    Payoff_vals: np.ndarray,
+                    cv_vals: Optional[np.ndarray],
+                    beta_vals: Optional[np.ndarray],
+                    method_name: str = 'propMS',
+                    samp_func: Optional[Callable] = None,
+                    samp_kwargs: Dict[str, Any] = None,
+                    use_CV: bool = False,
+                    beta_max: float = 0.5,
+                    f_over_S_range: Optional[List[float]] = None,
+                    lambda_max: float = 2.5,
+                    alpha: float = 0.05):
+    """Update the wealth for a grid of betting processes for the next sample (betting against
+    differet parameters for the sake of constructing a CS)
+        Arguments
+        grid:
+            Grid of parameters each betting process is betting against (treats as the null)
+        wealth:
+            Current wealth (value) of each betting process
+        seen, unseen:
+            The transaction indices that we have seen (sampled) and haven't seen
+        M, f, S:
+            The transaction values, true misstated fractions, and scores
+        Payoff_vals:
+            Payoff of betting process for each unsampled transaction
+        cv_vals, beta_vals:
+            Value of control variates, and beta sequence for scaling cvs
+        method_name, samp_func, samp_kwargs:
+            Name of sampling method, but overriden if specific samp_func is provided
+        use_CV:
+            Whether to use control variates
+        beta_max:
+            maximum beta value
+        f_over_S_range:
+            Bounds on f / S
+        lambda_max:
+            Maximum lambda (betting parameter) value
+        alpha:
+            alpha level for CS being constructed from betting processes
+
+    Return
+        Updated state of most inputs to this function after sampling one more index
+    """
     unseen = unseen.astype(int)
     Pi = M / np.sum(M)
     Pi_ = Pi[unseen]
@@ -481,8 +514,6 @@ def run_one_expt(M,
 
         Transaction_Indices = np.array(I_t)
         if cs == 'Hoef.':
-            #xs = np.array(Z_t) + np.append(0, (Pi[I_t] * f[I_t])[:-1])
-            #print(xs)
             LowerCS, UpperCS, hoef_diagnostics = hoeffding_boundaries(
                 Z_t=np.array(Z_t),
                 pi=Pi[I_t],
@@ -490,7 +521,8 @@ def run_one_expt(M,
                 lbs=np.array(lbs),
                 ubs=np.array(ubs),
                 alpha=alpha,
-                lambda_strategy=lambda_strategy)
+                lambda_strategy=lambda_strategy,
+                t0=N // 2)
             diagnostics = ('hoef', hoef_diagnostics, None)
         else:  # cs == 'Emp. Bern.':
             shift_pif = np.append(0, (Pi * f)[I_t][:-1])
@@ -499,21 +531,21 @@ def run_one_expt(M,
             rev_shift_pif = np.append(0, (Pi * (1 - f))[I_t][:-1])
             rev_est = np.cumsum(Z_om_t + rev_shift_pif) / np.arange(1, N + 1)
             rev_est = np.append(0.5, rev_est[:-1])
-            # xs = np.array(Z_t) + np.append(0, (Pi[I_t] * f[I_t])[:-1])
-            # print(xs)
             LowerCS, lower_diag = eb_boundary(np.array(Z_t),
                                               Pi[I_t],
                                               f[I_t],
                                               np.array(lbs),
                                               alpha / 2,
                                               ests=normal_est,
-                                              lambda_strategy=lambda_strategy)
+                                              lambda_strategy=lambda_strategy,
+                                              t0=N // 2)
             ucs, upper_diag = eb_boundary(np.array(Z_om_t),
                                           Pi[I_t], (1 - f[I_t]),
                                           np.array(lb_oms),
                                           alpha / 2,
                                           ests=rev_est,
-                                          lambda_strategy=lambda_strategy)
+                                          lambda_strategy=lambda_strategy,
+                                          t0=N // 2)
             UpperCS = 1. - ucs
             diagnostics = ('eb', lower_diag, upper_diag)
 

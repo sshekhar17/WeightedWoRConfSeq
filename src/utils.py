@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional, Tuple
 
 import argparse
 from math import log
@@ -12,12 +12,13 @@ plt.style.use('seaborn-white')
 
 
 def generate_MFS(
-        N_vals=(100, 100),
-        N=200,  # total number of transactions = sum(N_vals)
-        M_ranges=[[1e3, 1e4], [1e5, 2 * 1e5]],
-        f_ranges=[[0.4, 0.5], [1e-3, 2 * 1e-3]],
-        a=0.1,
-        seed: Optional[int] = None):
+        N_vals: Tuple[int, int] = (100, 100),
+        N: int = 200,  # total number of transactions = sum(N_vals)
+        M_ranges: List[List[float]] = [[1e3, 1e4], [1e5, 2 * 1e5]],
+        f_ranges: List[List[float]] = [[0.4, 0.5], [1e-3, 2 * 1e-3]],
+        a: float = 0.1,
+        seed: Optional[int] = None
+) -> Tuple[np.ndarray, np.ndrarry, np.ndarray]:
     """Generate synthetic M, f, S values.
 
     Parameters
@@ -64,31 +65,32 @@ def generate_MFS(
     return M, f, S
 
 
-def generate_random_problem_instance(N=100,
-                                     M_min=100,
-                                     M_max=1000,
-                                     f_min=0.5,
-                                     f_max=0.9,
-                                     random_seed=None):
+def generate_random_problem_instance(
+        N: int = 100,
+        M_min: int = 100,
+        M_max: int = 1000,
+        f_min: float = 0.5,
+        f_max: float = 0.9,
+        random_seed: Optional[int] = None) -> Tuple[np.ndarray, np.ndarray]:
     """Generates a random problem instance.
 
-    , help="Suite of methods to compare in this experiment"    Arguments
-            N : int
-                number of transactions
-            M_min : float
-                minimum value of the reported transactions
-            M_max : float
-                maximum value of reported transactions
-            f_min : float  \in [0, 1]
-                minimum fraction of the fraudulent transactions
-            f_max : float  \in [0, 1]
-                maximum fraction of fraudulent transactions
+    Arguments
+        N : int
+            number of transactions
+        M_min : float
+            minimum value of the reported transactions
+        M_max : float
+            maximum value of reported transactions
+        f_min : float  \in [0, 1]
+            minimum fraction of the fraudulent transactions
+        f_max : float  \in [0, 1]
+            maximum fraction of fraudulent transactions
 
-        Returns
-            M_vals : np.ndarray (N, )
-                generated transaction values
-            f_vals : np.ndarray (N, )
-                generated (oracle) fractions of fraudulent transaction values
+    Returns
+        M_vals : np.ndarray (N, )
+            generated transaction values
+        f_vals : np.ndarray (N, )
+            generated (oracle) fractions of fraudulent transaction values
     """
     assert (M_max > M_min) and (f_max > f_min)
     if random_seed is not None:
@@ -99,7 +101,25 @@ def generate_random_problem_instance(N=100,
     return M_vals, f_vals
 
 
-def get_decreasing_CS(LowerCS, UpperCS, Idx, M, f):
+def get_decreasing_CS(LowerCS: np.ndarray, UpperCS: np.ndarray,
+                      Idx: np.ndarray, M: np.ndarray,
+                      f: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Produces a CS on the remaining misstated fraction of money, rather than
+    m^*, which is the total misstated fraction.
+
+    Arguments
+        LowerCS, UpperCS:
+            lower and upper CSes for m^*
+        Idx:
+            The order in which the indices are queried (i.e., list of indices in query order)
+        M:
+            Transactions values
+        f:
+            Misstatement fractions
+    Returns
+        LowerCS_, UpperCS_:
+            lower and upper CSes for the remaining fraction of m^*
+    """
     N = len(M)
     assert (len(f) == N) and (len(Idx) == N)
 
@@ -215,13 +235,33 @@ def brute_force_CS_solver2(WW, grid, threshold=40):
     return L, U
 
 
-def predictive_correction1(LowerCS,
-                           UpperCS,
-                           Idx,
-                           Pi,
-                           f,
-                           intersect=True,
-                           logical=True):
+def predictive_correction1(
+        LowerCS: np.ndarray,
+        UpperCS: np.ndarray,
+        Idx: np.ndarray,
+        Pi: np.ndarray,
+        f: np.ndarray,
+        intersect: bool = True,
+        logical: bool = True) -> Tuple[np.ndarray, np.ndarray]:
+    """Takes the running intersection and/or intersection with logical CS of
+    existing CS Arguments LowerCS, UpperCS:
+
+        LowerCS, UpperCS:
+            Any valid lower and upper CS for m^*.
+        Idx:
+            The order in which the indices are queried (i.e., list of indices in query order)
+        Pi:
+            Weights induced transaction values
+        f:
+            Misstatement fractions
+        intersect:
+            if true, takes the running intersection of the input CS
+        logical:
+            if true, intersects the running CS with the logical CS
+    Returns
+        LowerCS, UpperCS:
+            lower and upper CSes that are the result
+    """
     Idx = Idx.astype(int)
 
     one_minus_pi_sum = 1 - np.cumsum(Pi[Idx])
@@ -242,7 +282,22 @@ def predictive_correction1(LowerCS,
     return LowerCS, UpperCS
 
 
-def first_threshold_crossing(arr, th, max_time=100, upward=True):
+def first_threshold_crossing(arr: np.ndarray,
+                             th: float,
+                             max_time: int = 100,
+                             upward: bool = True):
+    """Gets the first index/time an array value crosses a threshold
+        Arguments
+            arr:
+                Input array of floats
+            th:
+                Input threshold
+            max_time:
+                Alternative value to return if the array never corsses the threshold
+            upward:
+                Direction of crossing - upward if true and downward if false
+        Returns
+            First time (indexed at 1) a value in the array crosses the threshold, and max_time otherwise"""
     if upward:
         if np.any(arr > th):
             return np.argmax(arr > th) + 1
@@ -289,6 +344,10 @@ def get_arg_values():
         type=str,
         default='width',
         help='Choose whether to plot CS width or CS boundaries.')
+    parser.add_argument('--legend_flag',
+                        type=str,
+                        default='legend',
+                        help='Choose whether to plot a legend or not.')
     parser.add_argument(
         '--post_process',
         type=str,
@@ -301,6 +360,11 @@ def get_arg_values():
                         default=200,
                         help='Number of samples in each trial.')
     parser.add_argument('--seed', type=int, default=322, help='RNG seed')
+    parser.add_argument(
+        '--epsilon',
+        type=float,
+        default=0.05,
+        help='CI width at which to stop sampling for hist comparison.')
     args = parser.parse_args()
     out_dir = os.path.dirname(args.out_path)
     if not os.path.exists(out_dir):

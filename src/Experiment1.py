@@ -64,14 +64,15 @@ def CSexperiment(M_ranges,
                  save_fig=False,
                  plot_CS_width=True,
                  post_process='separate',
-                 seed: Optional[int] = None):
+                 seed: Optional[int] = None,
+                 legend_flag: bool = True):
     N2 = N - N1
     if inv_prop:
-        title = f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto 1/\pi$'
+        title = f'$N_1 / N={N1/N:.1f}, f \\propto 1/\\pi$'
         figname = f'../data/NoSideInfoCSf_inv_propto_M_large_{N1}'
         f_ranges = [f_ranges[1], f_ranges[0]]
     else:
-        title = f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto \pi$'
+        title = f'$N_1 / N={N1/N:.1f}, f \\propto \\pi$'
         figname = f'../data/NoSideInfoCSf_propto_M_large_{N1}'
     # generate the problem instance
     M, f, S = generate_MFS(N_vals=(N1, N2),
@@ -111,7 +112,8 @@ def CSexperiment(M_ranges,
                            in ['separate', 'logical'],
                            return_post_processed_separately=post_process
                            in ['separate'],
-                           seed=seed)
+                           seed=seed,
+                           legend_flag=legend_flag)
 
 
 def HistExperiment1(M_ranges,
@@ -127,13 +129,15 @@ def HistExperiment1(M_ranges,
                     save_fig=False,
                     a=0.5,
                     opacity=0.7,
-                    num_trials=20):
+                    num_trials=20,
+                    post_process='separate',
+                    legend_flag: bool = False):
     if inv_prop:
-        title = 'Stopping Times Distribution \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto 1/\pi$'  # NOQA
+        title = f'$N_1 / N = {N1/N:.1f}, f \\propto 1/\\pi$'  # NOQA
         figname = f'../data/NoSideInfoHist_f_inv_propto_M_large_{N1}'
         f_ranges = [f_ranges[1], f_ranges[0]]
     else:
-        title = 'Stopping Times Distribution \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto \pi$'  # NOQA
+        title = f'$N_1 / N = {N1/N:.1f}, f \\propto \\pi$'  # NOQA
         figname = f'../data/NoSideInfoHist_f_propto_M_large_{N1}'
         # assume the original f values are proportional to M
         # so we don't need any modification here
@@ -150,9 +154,9 @@ def HistExperiment1(M_ranges,
         f_ranges=f_ranges,
         num_trials=num_trials,
         save_fig=False,
-        post_process=True,
         epsilon=epsilon,
-        return_post_processed_separately=True)
+        post_process=post_process in ['separate', 'logical'],
+        return_post_processed_separately=post_process in ['separate'])
 
     if verbose:
         for key in StoppingTimesDict:
@@ -173,7 +177,8 @@ def HistExperiment1(M_ranges,
                    StoppingTimesDict=StoppingTimesDict,
                    save_fig=save_fig,
                    hist_info_dict=hist_info_dict,
-                   opacity=opacity)
+                   opacity=opacity,
+                   legend_flag=legend_flag)
 
 
 def CovExperiment1(M_ranges,
@@ -189,13 +194,15 @@ def CovExperiment1(M_ranges,
                    save_fig=False,
                    a=0.5,
                    opacity=0.7,
-                   num_trials=20):
+                   num_trials=20,
+                   post_process='separate',
+                   legend_flag: bool = False):
     if inv_prop:
-        title = 'Error rate \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto 1/\pi$'  # NOQA
+        title = f'$N_1 / N = {N1/N:.1f}, f \\propto 1/\\pi$'  # NOQA
         figname = f'../data/NoSideInfoHist_f_inv_propto_M_large_{N1}'
         f_ranges = [f_ranges[1], f_ranges[0]]
     else:
-        title = 'Error rate \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto \pi$'  # NOQA
+        title = f'$N_1 / N = {N1/N:.1f}, f \\propto \\pi$'  # NOQA
         figname = f'../data/NoSideInfoError_f_propto_M_large_{N1}'
         # assume the original f values are proportional to M
         # so we don't need any modification here
@@ -203,17 +210,18 @@ def CovExperiment1(M_ranges,
     methods_dict = get_methods_dict(lambda_max=lambda_max,
                                     method_suite=method_suite)
     # generate the dictionary with histogram plotting information
-    StoppingTimesDict = getCoverage(methods_dict,
-                                    N,
-                                    N1,
-                                    a=a,
-                                    M_ranges=M_ranges,
-                                    f_ranges=f_ranges,
-                                    num_trials=num_trials,
-                                    save_fig=False,
-                                    post_process=True,
-                                    epsilon=epsilon,
-                                    return_post_processed_separately=True)
+    StoppingTimesDict = getCoverage(
+        methods_dict,
+        N,
+        N1,
+        a=a,
+        M_ranges=M_ranges,
+        f_ranges=f_ranges,
+        num_trials=num_trials,
+        save_fig=False,
+        epsilon=epsilon,
+        post_process=post_process in ['separate', 'logical'],
+        return_post_processed_separately=post_process in ['separate'])
 
     if plot_results:
         xlabel = '# of samples'
@@ -230,7 +238,8 @@ def CovExperiment1(M_ranges,
                         StoppingTimesDict=StoppingTimesDict,
                         save_fig=save_fig,
                         hist_info_dict=hist_info_dict,
-                        opacity=opacity)
+                        opacity=opacity,
+                        legend_flag=legend_flag)
 
 
 if __name__ == '__main__':
@@ -250,8 +259,9 @@ if __name__ == '__main__':
     lambda_max = 2
     M_ranges = [[1e5, 1e6], [1e2, 1 * 1e3]]
     f_ranges = [[0.4, 0.5], [1e-3, 2 * 1e-3]]
-    epsilon = 0.05
-    num_trials = 5000
+    epsilon = args.epsilon
+    num_trials = 500
+    legend_flag = args.legend_flag == 'legend'
 
     #### Run the experiments
     if CSExpt:
@@ -267,6 +277,7 @@ if __name__ == '__main__':
                      save_fig=args.out_path,
                      plot_CS_width=args.cs_metric == 'width',
                      post_process=args.post_process,
+                     legend_flag=legend_flag,
                      seed=args.seed)
 
     if HistExpt:
@@ -282,6 +293,8 @@ if __name__ == '__main__':
                         plot_results=True,
                         save_fig=args.out_path,
                         a=a,
+                        legend_flag=legend_flag,
+                        post_process=args.post_process,
                         num_trials=num_trials)
     if CovExpt:
         CovExperiment1(M_ranges,
@@ -296,4 +309,6 @@ if __name__ == '__main__':
                        plot_results=True,
                        save_fig=args.out_path,
                        a=a,
+                       post_process=args.post_process,
+                       legend_flag=legend_flag,
                        num_trials=num_trials)

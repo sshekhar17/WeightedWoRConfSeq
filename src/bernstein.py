@@ -19,6 +19,22 @@ def phi(lambda_seq: np.ndarray, c_seq: np.ndarray) -> np.ndarray:
     #return -(np.log(1 - lambda_seq) + lambda_seq)
 
 
+def mov_avg(a: np.ndarray, n=5, method="arithmetic") -> np.ndarray:
+    """https://stackoverflow.com/questions/14313510/how-to-calculate-rolling-
+    moving-average-using-python-numpy-scipy."""
+
+    if method == 'arithmetic':
+        ret = np.cumsum(a, dtype=float)
+        ret[n:] = ret[n:] - ret[:-n]
+        return np.append(ret[:(n - 1)] / np.arange(1, n), ret[n - 1:] / n)
+        #return ret[n - 1:] / n
+    else:
+        ret = np.cumprod(a, dtype=float)
+        ret[n:] = ret[n:] / ret[:-n]
+        return np.append(np.power(ret[:(n - 1)], 1. / np.arange(1, n)),
+                         np.power(ret[n - 1:], 1. / n))
+
+
 def eb_boundary(Zs: np.ndarray,
                 Pi_t: np.ndarray,
                 f_t: np.ndarray,
@@ -43,11 +59,12 @@ def eb_boundary(Zs: np.ndarray,
     # if ests is None:
     #     ests = np.append(1, (np.cumsum(xs) / t)[:-1])
     ests = np.clip(ests, 0, 1)
-    c_t = np.abs(lbs - ests)
+    c_t = np.abs(ests)
     var_t = np.square(Zs - ests)
 
     c_sq_t = np.square(c_t)
     avg_var_t = np.append(1, (np.cumsum(var_t) / t)[:-1])
+    #avg_var_t = np.append(0.5, mov_avg(var_t, n=3)[:-1])
     avg_c_var_t = np.append(1, (np.cumsum(var_t * c_sq_t) / t)[:-1])
     #pred_avg_c_var_t = (avg_c_var_t * (t - 1) / t) + (c_sq_t * avg_var_t / t)
     pred_avg_c_var_t = (c_sq_t * avg_var_t / t)
@@ -59,7 +76,7 @@ def eb_boundary(Zs: np.ndarray,
     if lambda_strategy == 'approx_uniform':
         lambda_den_t = t * np.log(t + 1) * avg_var_t
     elif lambda_strategy == 'approx_fixed':
-        lambda_den_t = t0 * pred_avg_c_var_t
+        lambda_den_t = t0 * avg_var_t
     elif lambda_strategy == 'opt_uniform':
         lambda_den_t = avg_var_t * pred_inv_sum_t
     elif lambda_strategy == 'opt_fixed':
@@ -70,8 +87,6 @@ def eb_boundary(Zs: np.ndarray,
     lambda_num = 8 * np.log(1 / alpha)
     lambda_t = np.sqrt(lambda_num / lambda_den_t)
     lambda_t = np.minimum(lambda_t, 1 / (2 * c_t))
-    #print(f"ls: {lambda_strategy}", lambda_t)
-    #print(f"ls_den: {lambda_strategy}", lambda_den_t)
     lambda_sum_t = np.cumsum(lambda_t)
 
     xs = Zs + (np.append(0, np.cumsum(Pi_t * f_t)[:-1]))

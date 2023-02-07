@@ -1,14 +1,37 @@
 import numpy as np
 
 
-def hoeffding_boundaries(Z_t,
-                         pi,
-                         f,
-                         ubs,
-                         lbs,
-                         alpha,
-                         t0=None,
-                         lambda_strategy='approx_uniform'):
+def hoeffding_boundaries(
+        Z_t: np.ndarray,
+        pi: np.ndarray,
+        f: np.ndarray,
+        ubs: np.ndarray,
+        lbs: np.ndarray,
+        alpha: float,
+        t0: optional[int] = None,
+        lambda_strategy: str = 'approx_uniform'
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Boundaries of a Hoeffding CS.
+
+    Arguments
+        Z_t:
+            (Z_t) sequence of IPW pi(I_t) * f(I_t) pseudo outcomes drawn without replacement
+        pi:
+            weights of each transactions i.e. pi(i)
+        f:
+            true misstatement fraction of each transaction
+        ubs, lbs:
+            upper and lower bounds on the support of Z_t based on q_t and pi
+        alpha:
+            error rate i.e. output a 1 - alpha CS
+        t0:
+            time which we desire the CS to be tight at. otherwise, if None, the CS is intended to be reasonably tight at all times. This changes lambda values.
+        lambda_strategy:
+            The type of lambda sequence to use for the CS
+    Returns
+        Lower and upper bounds for a Hoeffding based 1-a CS
+    """
+
     N = Z_t.shape[0]
     t = np.arange(1, N + 1)
 

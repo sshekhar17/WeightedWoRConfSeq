@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import os
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import tikzplotlib as tpl
 import seaborn as sns
@@ -14,15 +15,39 @@ from constants import ColorsDict, LineStyleDict
 
 
 # def plot_results1
-def plot_CS(N,
-            M,
-            f,
-            Results_Dict,
-            plot_CS_width=False,
-            palette=None,
-            save_fig=False,
-            fig_info_dict={},
-            diagnostics=None):
+def plot_CS(N: int,
+            M: np.ndarray,
+            f: np.ndarray,
+            Results_Dict: Dict[str, Any],
+            plot_CS_width: bool = False,
+            palette: Optional[matplotlib.colors.Colormap] = None,
+            save_fig: bool = False,
+            fig_info_dict: Dict[str, Any] = {},
+            diagnostics: Optional[Dict[str, np.ndarray]] = None,
+            legend_flag: bool = False) -> None:
+    """Plot (and save to disk) confidence sequence from experiment results
+        Arguments
+            N:
+                Number of transactions
+            M:
+                Values of each transaction
+            f:
+                True misstated fraction for each transaction
+            Results_Dict:
+                Results (mapping between method name and result CS)
+            plot_CS_width:
+                If true plots the width of the CS, but plots the CS boundaries explicitly otherwise
+            palette:
+                Matplotlib palette to use for plotting
+            save_fig:
+                Whether to save the figure or not
+            fig_info_dict:
+                Additional keywords to pass to the plotting function
+            diagnostics:
+                Potential diagnostics of the experiment to plot
+            legend_flag:
+                Plot the legend iff it is true.
+    """
     # default color palette
     # if palette is None:
     #     palette = sns.color_palette(palette='tab10', n_colors=len(Results_Dict)+1)
@@ -67,7 +92,8 @@ def plot_CS(N,
     ax.set_title(title, fontsize=15)
     ax.set_xlabel(xlabel, fontsize=13)
     ax.set_ylabel(ylabel, fontsize=13)
-    ax.legend(fontsize=13)
+    if legend_flag:
+        ax.legend(fontsize=13)
     fig.tight_layout()
     # save the figure
     diag_figs = []
@@ -102,7 +128,10 @@ def plot_CS(N,
 
     if save_fig:
         figname_ = figname + '.tex' if save_fig is True else save_fig
-        tpl.save(figname_, axis_width=r'\figwidth', axis_height=r'\figheight')
+        tpl.save(figname_,
+                 figure=fig,
+                 axis_width=r'\figwidth',
+                 axis_height=r'\figheight')
         basename = os.path.splitext(figname_)[0]
         picname_ = basename + '.png'
         fig.savefig(picname_, dpi=300)
@@ -110,14 +139,37 @@ def plot_CS(N,
             fig.savefig(basename + f'_{name}_diagnostics.png', dpi=300)
 
 
-def plot_hists(N,
-               StoppingTimesDict,
-               palette=None,
-               plot_mean_val=False,
-               save_fig=False,
-               hist_info_dict={},
-               opacity=0.5,
-               ymax=None):
+def plot_hists(N: int,
+               StoppingTimesDict: Dict[str, Any],
+               palette: Optional[matplotlib.colors.Colormap] = None,
+               plot_mean_val: bool = False,
+               save_fig: bool = False,
+               hist_info_dict: Dict[str, Any] = {},
+               opacity: float = 0.5,
+               ymax: Optional[float] = None,
+               legend_flag: bool = False) -> None:
+    """Plot (and save to disk) histogram of stoppimg times from experiment results
+        Arguments
+            N:
+                Number of transactions
+            StoppingTimesDict:
+                Results (mapping between method name and distribution of stopping time result)
+            palette:
+                Matplotlib palette to use for plotting
+            plot_mean_val:
+                Plots the mean stopping time iff this is true
+            save_fig:
+                Whether to save the figure or not
+            hist_info_dict:
+                Additional keywords to pass to the plotting function
+            opacity:
+                Opacity of plot
+            ymax:
+                maximum y value in plot
+            legend_flag:
+                Plot the legend iff it is true.
+
+    """
     # default color palette
     if palette is None:
         palette = sns.color_palette(palette='tab10',
@@ -152,7 +204,8 @@ def plot_hists(N,
     plt.title(title, fontsize=15)
     plt.xlabel(xlabel, fontsize=13)
     plt.ylabel(ylabel, fontsize=13)
-    plt.legend(fontsize=13)
+    if legend_flag:
+        plt.legend(fontsize=13)
     if ymax is not None:
         plt.ylim([0, ymax])
     # save the figure
@@ -164,15 +217,37 @@ def plot_hists(N,
         fig.savefig(picname_, dpi=300)
 
 
-def plot_error_rate(N,
-                    alpha,
-                    StoppingTimesDict,
-                    palette=None,
-                    plot_mean_val=False,
-                    save_fig=False,
-                    hist_info_dict={},
-                    opacity=0.5,
-                    ymax=None):
+def plot_error_rate(N: int,
+                    alpha: float,
+                    StoppingTimesDict: Dict[str, Any],
+                    palette: Optional[matplotlib.colors.Colormap] = None,
+                    plot_mean_val: bool = False,
+                    save_fig: bool = False,
+                    hist_info_dict: Dict[str, Any] = {},
+                    opacity: float = 0.5,
+                    ymax: Optional[float] = None,
+                    legend_flag: bool = False):
+    """Plot (and save to disk) proportion of CSes don't cover the true parameter (m^*) from experiment results over time
+        Arguments
+            N:
+                Number of transactions
+            StoppingTimesDict:
+                Results (mapping between method name and distribution of first time CS doesn't cover 0)
+            palette:
+                Matplotlib palette to use for plotting
+            plot_mean_val:
+                Plots the mean stopping time iff this is true
+            save_fig:
+                Whether to save the figure or not
+            hist_info_dict:
+                Additional keywords to pass to the plotting function
+            opacity:
+                Opacity of plot
+            ymax:
+                maximum y value in plot
+            legend_flag:
+                Plot the legend iff it is true.
+    """
     # default color palette
     if palette is None:
         palette = sns.color_palette(palette='tab10',
@@ -211,7 +286,8 @@ def plot_error_rate(N,
     plt.title(title, fontsize=15)
     plt.xlabel(xlabel, fontsize=13)
     plt.ylabel(ylabel, fontsize=13)
-    plt.legend(fontsize=13)
+    if legend_flag:
+        plt.legend(fontsize=13)
     if ymax is not None:
         plt.ylim([0, ymax])
     # save the figure
@@ -223,27 +299,47 @@ def plot_error_rate(N,
         fig.savefig(picname_, dpi=300)
 
 
-def CompareMethodsOneTrial(M,
-                           f,
-                           S,
-                           methods_dict,
-                           nG=100,
-                           save_fig=False,
-                           fig_info_dict={},
-                           return_vals=False,
-                           plot_results=True,
-                           plot_CS_width=True,
-                           post_process=True,
-                           return_post_processed_separately=False,
-                           seed: Optional[int] = None):
-    """plot the CS for uniform and propM strategies; with and without
-    logicalCS.
+def CompareMethodsOneTrial(
+        M: np.ndarray,
+        f: np.ndarray,
+        S: np.ndarray,
+        methods_dict: Dict[str, Any],
+        nG: int = 100,
+        save_fig: bool = False,
+        fig_info_dict: Dict[str, Any] = {},
+        return_vals: bool = False,
+        plot_results: bool = True,
+        plot_CS_width: bool = True,
+        post_process: bool = True,
+        return_post_processed_separately: bool = False,
+        seed: Optional[int] = None,
+        legend_flag: bool = False) -> Optional[Dict[str, Any]]:
+    """Compare multiple methods on a single trial
+        Arguments
+            M:
+                Transaction values
+            f:
+                True misstatement fractions
+            s:
+                Scores for each transaction
+            methods_dict:
+                Dictonary mapping method name to additional keyword arguments
+            nG:
+                number of grid items to be used for betting CS in experiment
+            save_fig:
+                save figure iff this is true
+            fig_info_dict:
+                Additional keywords to pass to the plotting function
+            return_vals:
+                Return results if true
+            plot_results:
+                Plot results if true
+            plot_CS_width:
+                Plot CS width (instead of CS) if true
+            post_process, return_post_processed_separately:
+                Post process CS by taking running intersection and intersecting with logical CS if true,
+                and whether to return both post-processed and original CS
 
-    methods_dict        :dict keys are strings denoting method names,
-    and values are dicts that represent the additional keyword arguments
-    to be sent into the function 'run_one_expt' fig_info_dict
-    :dict either empty or contains the following keys 'figname',
-    'title', 'xlabel', 'ylabel'
     """
     N = len(M)
     Pi = M / M.sum()
@@ -273,6 +369,15 @@ def CompareMethodsOneTrial(M,
                                                         intersect=True)
             if not return_post_processed_separately:
                 LowerCS, UpperCS = LowerCS_, UpperCS_
+        else:
+            LowerCS_, UpperCS_ = predictive_correction1(LowerCS,
+                                                        UpperCS,
+                                                        Idx=Idx,
+                                                        Pi=Pi,
+                                                        f=f,
+                                                        logical=False,
+                                                        intersect=True)
+
         Results_Dict[key] = (LowerCS, UpperCS, Idx)
         if post_process and return_post_processed_separately:
             key_ = key + '+logical'
@@ -286,25 +391,60 @@ def CompareMethodsOneTrial(M,
                 Results_Dict=Results_Dict,
                 plot_CS_width=plot_CS_width,
                 save_fig=save_fig,
-                fig_info_dict=fig_info_dict)
+                fig_info_dict=fig_info_dict,
+                legend_flag=legend_flag)
     if return_vals:
         return Results_Dict
 
 
-def getStoppingTimesDistribution(methods_dict,
-                                 N,
-                                 N1,
-                                 a=0.5,
-                                 M_ranges=[[1e5, 1e6], [1e2, 1 * 1e3]],
-                                 f_ranges=[[1e-3, 2 * 1e-3], [0.4, 0.5]],
-                                 num_trials=200,
-                                 nG=100,
-                                 save_fig=False,
-                                 post_process=True,
-                                 epsilon=0.05,
-                                 progress_bar=True,
-                                 return_post_processed_separately=False,
-                                 seed: Optional[float] = None):
+def getStoppingTimesDistribution(
+        methods_dict: Dict[str, Any],
+        N: int,
+        N1: int,
+        a: float = 0.5,
+        M_ranges: List[List[float]] = [[1e5, 1e6], [1e2, 1 * 1e3]],
+        f_ranges: List[List[float]] = [[1e-3, 2 * 1e-3], [0.4, 0.5]],
+        num_trials: int = 200,
+        nG: int = 100,
+        save_fig: bool = False,
+        post_process: bool = True,
+        epsilon: float = 0.05,
+        progress_bar: bool = True,
+        return_post_processed_separately: bool = False,
+        seed: Optional[float] = None) -> Dict[str, np.ndarray]:
+    """Run experiment comparing the stopping time distributions
+        (first time CS width dips below epsilon) of different methods
+        Arguments
+            methods_dict:
+                Dictonary mapping method name to additional keyword arguments
+            N:
+                Number of transactions
+            N1:
+                Number of 'large' transactions
+            a:
+                Parameter determining accuracy of scores generated (smaller is more accurate)
+            M_ranges:
+                List of 2 M ranges for 'large' and 'small' M values to be drawn from
+            f_ranges:
+                List of 2 f ranges for 'large' and 'small' f values to be drawn from
+            num_trials:
+                number of trials to run simulation for
+            nG:
+                number of grid items to be used for betting CS in experiment
+            save_fig:
+                save figure iff this is true
+            post_process, return_post_processed_separately:
+                Post process CS by taking running intersection and intersecting with logical CS if true,
+                and whether to return both post-processed and original CS
+            epsilon:
+                Parameter determining CS threshold at which stopping time is determined
+            progress_bar:
+                Plot results if true
+            seed:
+                Random seed
+        Return
+            Dict mapping method name to array of stopping times for each trial
+    """
 
     # initialize the dictionary to store the stopping times
     StoppingTimesDict = {}
@@ -352,20 +492,54 @@ def getStoppingTimesDistribution(methods_dict,
     return StoppingTimesDict
 
 
-def getCoverage(methods_dict,
-                N,
-                N1,
-                a=0.5,
-                M_ranges=[[1e5, 1e6], [1e2, 1 * 1e3]],
-                f_ranges=[[1e-3, 2 * 1e-3], [0.4, 0.5]],
-                num_trials=200,
-                nG=100,
-                save_fig=False,
-                post_process=True,
-                epsilon=0.05,
-                progress_bar=True,
-                return_post_processed_separately=False,
-                seed: Optional[float] = None):
+def getCoverage(methods_dict: Dict[str, Any],
+                N: int,
+                N1: int,
+                a: float = 0.5,
+                M_ranges: List[List[float]] = [[1e5, 1e6], [1e2, 1 * 1e3]],
+                f_ranges: List[List[float]] = [[1e-3, 2 * 1e-3], [0.4, 0.5]],
+                num_trials: int = 200,
+                nG: int = 100,
+                save_fig: bool = False,
+                post_process: bool = True,
+                epsilon: float = 0.05,
+                progress_bar: bool = True,
+                return_post_processed_separately: bool = False,
+                seed: Optional[float] = None) -> Dict[str, np.ndarray]:
+    """Run experiment getting the empirical coverage rate of each CS
+        (first time CS width dips below epsilon) of different methods
+        Arguments
+            methods_dict:
+                Dictonary mapping method name to additional keyword arguments
+            N:
+                Number of transactions
+            N1:
+                Number of 'large' transactions
+            a:
+                Parameter determining accuracy of scores generated (smaller is more accurate)
+            M_ranges:
+                List of 2 M ranges for 'large' and 'small' M values to be drawn from
+            f_ranges:
+                List of 2 f ranges for 'large' and 'small' f values to be drawn from
+            num_trials:
+                number of trials to run simulation for
+            nG:
+                number of grid items to be used for betting CS in experiment
+            save_fig:
+                save figure iff this is true
+            post_process, return_post_processed_separately:
+                Post process CS by taking running intersection and intersecting with logical CS if true,
+                and whether to return both post-processed and original CS
+            epsilon:
+                Parameter determining CS threshold at which stopping time is determined
+            progress_bar:
+                Plot results if true
+            seed:
+                Random seed
+        Return
+            Dict mapping method name to array of first time CS did not
+            cover the true parameter for each trial (inf if the CS never miscovers the true parameter)
+    """
 
     # initialize the dictionary to store the stopping times
     StoppingTimesDict = {}
