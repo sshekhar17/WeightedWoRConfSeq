@@ -18,7 +18,7 @@ def generate_MFS(
         f_ranges: List[List[float]] = [[0.4, 0.5], [1e-3, 2 * 1e-3]],
         a: float = 0.1,
         seed: Optional[int] = None
-) -> Tuple[np.ndarray, np.ndrarry, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Generate synthetic M, f, S values.
 
     Parameters
