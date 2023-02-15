@@ -337,8 +337,11 @@ def get_arg_values():
                         help="Suite of methods to compare in this experiment")
     parser.add_argument('--out_path',
                         type=str,
-                        default='fig.tex',
+                        default='./fig.tex',
                         help='Output path to save figure to')
+    parser.add_argument('--save_fig',
+                        action='store_true', 
+                        help="flag to save figures")
     parser.add_argument(
         '--cs_metric',
         type=str,

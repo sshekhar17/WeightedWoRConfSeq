@@ -1,3 +1,4 @@
+from typing import List, Optional, Tuple
 import numpy as np
 
 
@@ -8,7 +9,7 @@ def hoeffding_boundaries(
         ubs: np.ndarray,
         lbs: np.ndarray,
         alpha: float,
-        t0: optional[int] = None,
+        t0: Optional[int] = None,
         lambda_strategy: str = 'approx_uniform'
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Boundaries of a Hoeffding CS.
