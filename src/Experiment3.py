@@ -212,11 +212,11 @@ def GainExperiment(Corr,
     if inv_prop:
         figname = f'/CV_Gain_f_inv_propto_M_large_{N1}_eps_{epsilon}'.replace(
             '.', '_')
-        figname = '{FIG_DIR}' + figname
+        figname = f'{FIG_DIR}' + figname
     else:
         figname = f'/CV_Gain_f_propto_M_large_{N1}_eps_{epsilon}'.replace(
             '.', '_')
-        figname = '{FIG_DIR}' + figname
+        figname = f'{FIG_DIR}' + figname
     # plot the results
     if plot_results:
         palette = sns.color_palette(n_colors=10)
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     inv_prop = args.f_method == 'inv'
 
     a = 0.1
-    corr = 0.9 # controls the correlation b/w f & S
+    corr = 0.7 # controls the correlation b/w f & S
     N2 = N - N1
     f_over_S_range = [1 - a, 1 + a]
     M_ranges = [[5e5, 9e5], [1e6, 1e6]]
