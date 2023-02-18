@@ -17,9 +17,10 @@ from tqdm import tqdm
 
 #########################################################
 #### get the absolute path of the directory to store data
-module_dir = os.path.dirname(os.path.abspath(__file__))
+module_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(module_dir)
 FIG_DIR = parent_dir + '/data'
+print(FIG_DIR)
 ####
 #########################################################
 
@@ -266,7 +267,7 @@ if __name__ == '__main__':
     lambda_max = 2.0 # 
     nG = 100 #100
     beta_max = 0.8
-    num_trials = 250
+    num_trials = 5
 
     # M_ranges = [ [1e5, 1e6], [1e2, 1*1e3]],
     if CSExpt:
