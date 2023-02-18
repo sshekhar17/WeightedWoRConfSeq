@@ -1,6 +1,10 @@
 #!/usr/bin/bash
 
 # This script runs all experiments to compare Hoeffding, empirical-Bernstein, and betting CSes.
+#
+if [ ! -d "figures/comp_cs" ]; then
+    mkdir -p figures/comp_cs
+fi
 SEED=322
 
 python src/Experiment1.py --method_suite comp_cs --N 200 --mode coverage --out_path figures/comp_cs/exp1_inv_2_coverage.tex --seed $SEED --small_prop 0.2 --f_method inv
