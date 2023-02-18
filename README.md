@@ -1,4 +1,4 @@
-# Confidence Sequences for Weighted Sampling without Replacement
+# Risk-limiting Financial Audits via Weighted Sampling without Replacement
 
 ## Installation
 
