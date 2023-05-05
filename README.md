@@ -1,4 +1,5 @@
 # Risk-limiting Financial Audits via Weighted Sampling without Replacement
+#Confidence Sequences for Weighted Sampling without Replacement
 
 ## Installation
 
@@ -44,7 +45,12 @@ These figures can be rendered in a LaTeX --- below is an example template.
 
 All of the code is the `src/` directory.
 
-`ExperimentBase.py` and `Experiment{1,2,3}.py` contain the code for running experiments and simulation setups that occur.
+The notebook `example.ipynb` explains the basic steps in setting up an 
+experiment, and constructing confidence sequences. 
+
+`ExperimentBase.py` and `Experiment{1,2,3}.py` contain the code for running experiments and simulation setups that occur. `Experiment4.py` contains the code 
+for comparing the performance of three methods (propM, propM+CV, and uniform) on 
+a 'semi-real-world' [dataset of house prices](https://www.kaggle.com/datasets/harlfoxem/housesalesprediction). 
 
 Confidence sequence code is in `hoeffding.py`, `bernstein.py`, (for Hoeffding and empirical-Bernstein) and the betting CS code is in `weightedCSsequential.py`, along with betting code.
 
