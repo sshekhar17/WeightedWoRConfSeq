@@ -39,3 +39,7 @@ LineStyleDict = {
     'Hoef.+logical': '--',
     'Emp. Bern.+logical': '--',
 }
+
+#############
+PATH_TO_HOUSING_DATA = './kc_house_data.csv'
+#############
