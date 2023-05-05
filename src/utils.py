@@ -18,7 +18,7 @@ def generate_MFS(
         f_ranges: List[List[float]] = [[0.4, 0.5], [1e-3, 2 * 1e-3]],
         a: float = 0.1,
         seed: Optional[int] = None
-) -> Tuple[np.ndarray, np.ndrarry, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Generate synthetic M, f, S values.
 
     Parameters
@@ -337,8 +337,11 @@ def get_arg_values():
                         help="Suite of methods to compare in this experiment")
     parser.add_argument('--out_path',
                         type=str,
-                        default='fig.tex',
+                        default='./fig.tex',
                         help='Output path to save figure to')
+    parser.add_argument('--save_fig',
+                        action='store_true', 
+                        help="flag to save figures")
     parser.add_argument(
         '--cs_metric',
         type=str,

@@ -215,6 +215,8 @@ def plot_hists(N: int,
         # plt.savefig(figname, dpi=450)
         picname_ = os.path.splitext(figname_)[0] + '.png'
         fig.savefig(picname_, dpi=300)
+    else:
+        plt.show()
 
 
 def plot_error_rate(N: int,
@@ -411,7 +413,9 @@ def getStoppingTimesDistribution(
         epsilon: float = 0.05,
         progress_bar: bool = True,
         return_post_processed_separately: bool = False,
-        seed: Optional[float] = None) -> Dict[str, np.ndarray]:
+        seed: Optional[float] = None,
+        use_CV:Optional[bool]=False,
+        c :Optional[float]=0.1) -> Dict[str, np.ndarray]:
     """Run experiment comparing the stopping time distributions
         (first time CS width dips below epsilon) of different methods
         Arguments
@@ -442,6 +446,10 @@ def getStoppingTimesDistribution(
                 Plot results if true
             seed:
                 Random seed
+            use_CV:
+                flag indicating a control-variate experiment 
+            c:
+                float deciding the amount of correlation between f and S
         Return
             Dict mapping method name to array of stopping times for each trial
     """
@@ -465,6 +473,9 @@ def getStoppingTimesDistribution(
                                f_ranges=f_ranges,
                                a=a,
                                seed=seed_seq[trial])
+        # modify the scores if using control variates 
+        if use_CV:
+            S = c*f + (1-c)*np.random.random(f.shape)
         # run one trial of the experiment
         Results_Dict = CompareMethodsOneTrial(
             M,

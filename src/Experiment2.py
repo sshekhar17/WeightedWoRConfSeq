@@ -113,6 +113,7 @@ def CSexperiment2(M_ranges,
 
 def HistExperiment2(M_ranges,
                     f_ranges,
+                    method_suite, 
                     N=200,
                     N1=100,
                     epsilon=0.05,

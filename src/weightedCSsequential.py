@@ -1,4 +1,4 @@
-"""Sequential implementation of the weighted CS using sampling WoR."""
+"""Betting-based construction of CS for weighted sampling WoR."""
 
 from typing import Any, Callable, Dict, List, Optional
 
@@ -10,16 +10,15 @@ from utils import generate_MFS, predictive_correction1
 from hoeffding import hoeffding_boundaries
 from bernstein import eb_boundary
 
+################################################################################
 ### the overview
 #for t=1,2,...
-#1   get the next probability distribution
+#1  get the next probability distribution
 #2  compute the minimum and maximum values of the next bet
 #3  compute the limits of the allowed lambda value
 #4  compute the next lambda value
 #5  draw the next index
 #6  update the seen and unseen sets of indices
-
-
 ################################################################################
 def get_idx(val, arr):
     """find the position of the term val in the array 'arr', return -1 if it
@@ -38,6 +37,11 @@ def get_Confidence_Interval(wealth, grid, delta=0.05):
         wealth  : (nG,) numpy array denoting \{W_t(m): m \in grid\}
         grid    : (nG,) numpy array, usually a uniform grid in [0,1]
         delta   : float, tolerance level in (0,1)
+    
+    Returns: 
+        l, u        :floats denoting lower and upper end points of the
+                        current CS 
+        error_flag: :bool, True if the CS becomes empty 
     """
     not_rejected = []
     error_flag = False
@@ -242,12 +246,12 @@ def get_next_CV_bet(cv_vals,
     return beta
 
 
-def get_next_bet(values, betting_method='kelly', tol=1e-10, lambda_max=None):
+def get_next_bet(values, betting_method='kelly', tol=1e-10, lambda_max=None, m=None):
     """Return the next bet.
 
     Parameters:
         values          :ndarray    previous payoff (or payoff - beta*cv) values
-        betting_method  :str        only implemented approximate kelly betting
+        betting_method  :str        only implemented approximate 'kelly' and 'fan' methods
                                     #TODO: add ONS betting strategy
         lambda_max      :float      upper bound on the bet magnitude
 
@@ -261,6 +265,12 @@ def get_next_bet(values, betting_method='kelly', tol=1e-10, lambda_max=None):
         B_ = np.sum(values)
         B2_ = np.sum(values * values)
         lambda_ = B_ / (B2_ + tol)
+    elif betting_method == 'fan':
+        assert m is not None
+        B_ = np.sum(values)
+        B2_ = np.sum(values * values)
+        w_t = m if B_>=0 else 1-m
+        lambda_ = B_/(w_t*abs(B_)+B2_+tol)
     else:
         raise Exception('Only implemented Kelly betting')
     if lambda_max is not None:
@@ -285,7 +295,8 @@ def one_step_update(grid: np.ndarray,
                     beta_max: float = 0.5,
                     f_over_S_range: Optional[List[float]] = None,
                     lambda_max: float = 2.5,
-                    alpha: float = 0.05):
+                    alpha: float = 0.05, 
+                    betting_method='kelly'):
     """Update the wealth for a grid of betting processes for the next sample (betting against
     differet parameters for the sake of constructing a CS)
         Arguments
@@ -371,7 +382,7 @@ def one_step_update(grid: np.ndarray,
                                              lambda_max=lambda_max)
         assert l_min <= l_max  # sanity check
         # step 5: get the lambda value for this m
-        lambda_ = get_next_bet(values, betting_method='kelly')
+        lambda_ = get_next_bet(values, betting_method=betting_method, m=m)
         lambda_ = max(l_min, min(l_max, lambda_))
         # step 6: get the next payoff value
         payoff = (Pi_[idx] * f_[idx]) / (q_t[idx] + 1e-15) - (m - mu_0)
@@ -426,7 +437,8 @@ def run_one_expt(M,
                  return_payoff=False,
                  lambda_strategy=None,
                  cv_max=np.inf,
-                 seed=None):
+                 seed=None, 
+                 betting_method='kelly'):
     N = len(M)
     LowerCS, UpperCS = np.zeros((N, )), np.ones((N, ))
     grid = np.linspace(0, 1, nG)
@@ -463,7 +475,8 @@ def run_one_expt(M,
                                      beta_max=beta_max,
                                      lambda_max=lambda_max,
                                      f_over_S_range=f_over_S_range,
-                                     alpha=alpha)
+                                     alpha=alpha, 
+                                     betting_method=betting_method)
             if use_CV:
                 seen, unseen, It, wealth, Payoff_vals, L, U, cv_vals, beta_vals, error_flag, lambda_ = result
             else:
@@ -647,8 +660,8 @@ def testCV(A=0.1):
                                  use_CV=False,
                                  f_over_S_range=f_over_S_range,
                                  alpha=0.05,
-                                 logical_CS=False,
-                                 intersect=False,
+                                 logical_CS=True,
+                                 intersect=True,
                                  return_payoff=False)
     grid, _, L1, U1, _, _ = result_propMS
 
@@ -662,7 +675,7 @@ def testCV(A=0.1):
                                 use_CV=True,
                                 f_over_S_range=None,
                                 alpha=0.05,
-                                logical_CS=False,
+                                logical_CS=True,
                                 intersect=False,
                                 return_payoff=False)
     _, _, L2, U2, _, _ = result_propM
@@ -672,7 +685,85 @@ def testCV(A=0.1):
     plt.plot(NN, U2 - L2, label='propM-cv')
     plt.legend()
 
+def testBettingMethod(A=0.1, N=500):
+    N1 = 50
+    N2 = N - N1
+    f_over_S_range = [1 - A, 1 + A]
+    f_ranges = [[0.4, 0.5], [1e-3, 2 * 1e-3]]
+    # M_ranges = [ [1e5, 1e6], [1e2, 1*1e3]],
+    M_ranges = [[1e2, 2e2], [5e2, 8e2]]
+    M, f, S = generate_MFS(
+        N_vals=(N1, N2),
+        N=N,  # total number of transactions = sum(N_vals)
+        M_ranges=M_ranges,
+        f_ranges=f_ranges,
+        a=A)
+
+    nG = 100
+    lambda_max = 2
+    result_Kelly = run_one_expt(M,
+                                 f,
+                                 S,
+                                 method_name='propM',
+                                 lambda_max=lambda_max,
+                                 beta_max=0.5,
+                                 nG=nG,
+                                 use_CV=False,
+                                 f_over_S_range=f_over_S_range,
+                                 alpha=0.05,
+                                 logical_CS=True,
+                                 intersect=True,
+                                 return_payoff=False,
+                                 betting_method='kelly')
+    # grid, _, L1, U1, _, _ = result_propMS
+    grid, _, L1, U1, _, _, _ =  result_Kelly
+
+
+    result_Fan = run_one_expt(M,
+                                f,
+                                S,
+                                method_name='propM',
+                                lambda_max=lambda_max,
+                                beta_max=0.5,
+                                nG=nG,
+                                use_CV=False,
+                                f_over_S_range=None,
+                                alpha=0.05,
+                                logical_CS=True,
+                                intersect=True,
+                                return_payoff=False, 
+                                betting_method='fan')
+    _, _, L2, U2, _, _, _ = result_Fan
+
+    NN = np.arange(1, N + 1)
+    # plt.plot(NN, U1 - L1, label='ApproxKelly')
+    # plt.plot(NN, U2 - L2, label='Fan')
+    # plt.legend()
+
+    th = 0.05
+    idx_K = np.argmax(U1-L1<=th)
+    st_K = NN[idx_K]
+
+    idx_F = np.argmax(U2-L2<=th)
+    st_F = NN[idx_F]
+    return st_K, st_F
 
 if __name__ == '__main__':
-    #testCV(0.9999)
-    main()
+    num_trials=100
+    N=500
+    StoppingTimes_K = np.zeros((num_trials,))
+    StoppingTimes_F = np.zeros((num_trials,))
+    for trial in tqdm(range(num_trials)): 
+        st_K, st_F = testBettingMethod(A=0.2, N=N)
+        StoppingTimes_K[trial] = st_K
+        StoppingTimes_F[trial] = st_F
+    
+    plt.figure()
+    plt.hist(StoppingTimes_K, density=True, label='ApproxKelly', alpha=0.3)
+    plt.hist(StoppingTimes_F, density=True, label='Fan', alpha=0.3)
+    plt.xlim([0,500])
+    plt.legend()
+    plt.title('Stopping Time Distribution', fontsize=14)
+    # plt.savefig('Kelly_Fan.png', dpi=450)
+    # print(st_K, st_F)
+    # main()

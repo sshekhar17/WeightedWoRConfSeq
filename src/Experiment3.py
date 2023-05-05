@@ -2,6 +2,7 @@
 
 Comparison of propM with propM+control-variates.
 """
+import os 
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -14,6 +15,14 @@ from ExperimentBase import *
 
 from tqdm import tqdm
 
+#########################################################
+#### get the absolute path of the directory to store data
+module_dir = os.path.dirname(os.path.realpath(__file__))
+parent_dir = os.path.dirname(module_dir)
+FIG_DIR = parent_dir + '/data'
+print(FIG_DIR)
+####
+#########################################################
 
 def get_methods_dict(lambda_max=2, beta_max=0.5, method_suite='default'):
     """Generate the methods dictionary for this experiment."""
@@ -58,11 +67,11 @@ def CSexperiment3(M_ranges,
     N2 = N - N1
     if inv_prop:
         title = f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto 1/\pi$'
-        figname = f'../data/CV_CS_inv_propto_M_large_{N1}'
+        figname = f'{FIG_DIR}/CV_CS_inv_propto_M_large_{N1}'
         f_ranges = [f_ranges[1], f_ranges[0]]
     else:
         title = f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto \pi$'
-        figname = f'../data/CV_CS_propto_M_large_{N1}'
+        figname = f'{FIG_DIR}/CV_CS_propto_M_large_{N1}'
     # generate the problem instance
     M, f, S = generate_MFS(N_vals=(N1, N2),
                            N=N,
@@ -113,14 +122,15 @@ def HistExperiment3(M_ranges,
                     beta_max=0.5,
                     num_trials=20,
                     return_vals=False,
-                    progress_bar=True):
+                    progress_bar=True, 
+                    c=0.1):
     if inv_prop:
         title = f'Stopping Times Distribution \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto 1/\pi$'
-        figname = f'../data/CVHist_f_inv_propto_M_large_{N1}'
+        figname = f'{FIG_DIR}/CVHist_f_inv_propto_M_large_{N1}'
         f_ranges = [f_ranges[1], f_ranges[0]]
     else:
         title = f'Stopping Times Distribution \n' + f'{N1/N:.0%} large ' + r'$\pi$ values,    $f \propto \pi$'
-        figname = f'../data/CVHist_f_propto_M_large_{N1}'
+        figname = f'{FIG_DIR}/CVHist_f_propto_M_large_{N1}'
         # assume the original f values are proportional to M
         # so we don't need any modification here
     # generate the dictionary with methods information
@@ -138,7 +148,9 @@ def HistExperiment3(M_ranges,
                                                      save_fig=False,
                                                      post_process=True,
                                                      epsilon=epsilon,
-                                                     progress_bar=progress_bar)
+                                                     progress_bar=progress_bar, 
+                                                     use_CV=True, 
+                                                     c=c)
 
     if verbose:
         for key in StoppingTimesDict:
@@ -164,7 +176,7 @@ def HistExperiment3(M_ranges,
         return ST, STcv
 
 
-def GainExperiment(AA,
+def GainExperiment(Corr,
                    M_ranges,
                    f_ranges,
                    N,
@@ -177,9 +189,9 @@ def GainExperiment(AA,
                    plot_results=False,
                    save_fig=False,
                    return_vals=False):
-    GainMean = np.zeros((AA.shape))
-    GainStd = np.zeros((AA.shape))
-    for i, a in tqdm(list(enumerate(AA))):
+    GainMean = np.zeros((Corr.shape))
+    GainStd = np.zeros((Corr.shape))
+    for i, corr in tqdm(list(enumerate(Corr))):
         ST, STcv = HistExperiment3(M_ranges,
                                    f_ranges,
                                    'default',
@@ -189,45 +201,49 @@ def GainExperiment(AA,
                                    inv_prop=inv_prop,
                                    verbose=False,
                                    save_fig=False,
-                                   a=a,
                                    lambda_max=lambda_max,
                                    beta_max=beta_max,
                                    num_trials=num_trials,
                                    return_vals=True,
-                                   progress_bar=False)
+                                   progress_bar=False, 
+                                   c=corr)
         Ratio = STcv / ST
         GainMean[i], GainStd[i] = Ratio.mean(), Ratio.std()
 
     if inv_prop:
         figname = f'/CV_Gain_f_inv_propto_M_large_{N1}_eps_{epsilon}'.replace(
             '.', '_')
-        figname = '../data' + figname
+        figname = f'{FIG_DIR}' + figname
     else:
         figname = f'/CV_Gain_f_propto_M_large_{N1}_eps_{epsilon}'.replace(
             '.', '_')
-        figname = '../data' + figname
+        figname = f'{FIG_DIR}' + figname
     # plot the results
     if plot_results:
         palette = sns.color_palette(n_colors=10)
         plt.figure()
-        plt.plot(1 - AA, GainMean, color=palette[0])
-        plt.fill_between(1 - AA,
+        plt.plot(Corr, GainMean, color=palette[0])
+        plt.fill_between(Corr,
                          GainMean - GainStd,
                          GainMean + GainStd,
                          alpha=0.3,
                          color=palette[0])
-        plt.plot(AA, np.ones(AA.shape), 'k--', alpha=0.6)
+        plt.plot(Corr, np.ones(Corr.shape), 'k--', alpha=0.6)
         plt.title('Reduction in Sample-Size by using Control Variates',
                   fontsize=15)
         plt.xlabel(r'Correlation between $S$ and $f$ ', fontsize=13)
         plt.ylabel('Ratio of stopping times with and without CV', fontsize=13)
 
         if save_fig:
-            figname_ = figname + '.tex'
-            tpl.save(figname_,
+            figname_tex = figname + '.tex'
+            figname_png = figname + '.png'
+            plt.savefig(figname_png, dpi=450)
+            tpl.save(figname_tex,
                      axis_width=r'\figwidth',
                      axis_height=r'\figheight')
             # plt.savefig(figname, dpi=450)
+        else:
+            plt.show()
     if return_vals:
         return GainMean, GainStd
 
@@ -237,20 +253,21 @@ if __name__ == '__main__':
     CSExpt = args.mode == 'cs'
     HistExpt = args.mode == 'hist'
     GainExpt = args.mode == 'gain'
-    save_fig = args.out_path
+    save_fig = args.save_fig
     N = 200
     N1 = int(np.floor(args.small_prop * N))
     inv_prop = args.f_method == 'inv'
 
     a = 0.1
+    corr = 0.7 # controls the correlation b/w f & S
     N2 = N - N1
     f_over_S_range = [1 - a, 1 + a]
     M_ranges = [[5e5, 9e5], [1e6, 1e6]]
     f_ranges = [[0.4, 0.5], [1e-3, 2 * 1e-3]]
-    lambda_max = 2.5
-    nG = 100
-    beta_max = 0.5
-    num_trials = 250
+    lambda_max = 2.0 # 
+    nG = 100 #100
+    beta_max = 0.8
+    num_trials = 5
 
     # M_ranges = [ [1e5, 1e6], [1e2, 1*1e3]],
     if CSExpt:
@@ -268,7 +285,7 @@ if __name__ == '__main__':
 
     if HistExpt:
         epsilon = 0.05
-        HistExperiment3(M_ranges,
+        ST, STcv= HistExperiment3(M_ranges,
                         f_ranges,
                         args.method_suite,
                         N,
@@ -281,13 +298,17 @@ if __name__ == '__main__':
                         lambda_max=lambda_max,
                         beta_max=beta_max,
                         num_trials=num_trials,
-                        return_vals=False,
-                        plot_results=True)
+                        return_vals=True,
+                        plot_results=True, 
+                        c=corr)
+        print(f'Average gain with a={a} is {(ST/STcv).mean():.3f}')
     if GainExpt:
-        AA = np.linspace(0.1, 0.9, 9)
-        Gain = np.zeros(AA.shape)
-        epsilon = 0.025
-        GainExperiment(AA,
+        Corr = np.linspace(0.1, 0.9, 9)
+        Gain = np.zeros(Corr.shape)
+        # smaller values of epsilon shows better gains 
+        # in this experiment
+        epsilon = 0.025 
+        GainExperiment(Corr,
                        M_ranges,
                        f_ranges,
                        N,
