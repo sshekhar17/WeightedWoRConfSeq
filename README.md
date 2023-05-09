@@ -52,7 +52,7 @@ Confidence sequence code is in `hoeffding.py`, `bernstein.py`, (for Hoeffding an
 `utils.py` contains code for generating the transaction/misstatement values, as well as other useful functions.
 
 
-### Reproducing the figures 
+### Experiments
 `ExperimentBase.py` and `Experiment{1,2,3}.py` contain the code for running experiments and simulation setups that occur. `Experiment4.py` contains the code 
 for comparing the performance of three methods (propM, propM+CV, and uniform) on 
 a 'semi-real-world' [dataset of house prices](https://www.kaggle.com/datasets/harlfoxem/housesalesprediction). 
