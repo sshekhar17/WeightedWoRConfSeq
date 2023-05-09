@@ -45,13 +45,16 @@ These figures can be rendered in a LaTeX --- below is an example template.
 
 All of the code is the `src/` directory.
 
-The notebook `example.ipynb` explains the basic steps in setting up an 
+The notebook `src/example.ipynb` explains the basic steps in setting up an 
 experiment, and constructing confidence sequences. 
 
+Confidence sequence code is in `hoeffding.py`, `bernstein.py`, (for Hoeffding and empirical-Bernstein) and the betting CS code is in `weightedCSsequential.py`, along with the helper functions.
+
+`utils.py` contains code for generating the transaction/misstatement values, as well as other useful functions.
+
+
+### Reproducing the figures 
 `ExperimentBase.py` and `Experiment{1,2,3}.py` contain the code for running experiments and simulation setups that occur. `Experiment4.py` contains the code 
 for comparing the performance of three methods (propM, propM+CV, and uniform) on 
 a 'semi-real-world' [dataset of house prices](https://www.kaggle.com/datasets/harlfoxem/housesalesprediction). 
 
-Confidence sequence code is in `hoeffding.py`, `bernstein.py`, (for Hoeffding and empirical-Bernstein) and the betting CS code is in `weightedCSsequential.py`, along with betting code.
-
-`utils.py` contains code for generating the transaction/misstatement values, as well as other useful functions.
